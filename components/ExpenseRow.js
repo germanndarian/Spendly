@@ -1,0 +1,105 @@
+// Eine Zeile in einer Ausgabenliste: Farbpunkt, Beschreibung, Kategorie, Betrag.
+// isFirst / isLast: Die Zeilen bilden zusammen eine Karte mit runden Ecken
+// (wichtig für die SectionList im Verlauf, wo jede Zeile einzeln gerendert wird).
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
+import { typography } from '../theme/typography';
+import { radius, spacing } from '../theme/spacing';
+import { getCategory } from '../utils/categories';
+import { formatCHF } from '../utils/format';
+
+export default function ExpenseRow({ expense, subtitle, onPress, isFirst = true, isLast = true }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const category = getCategory(expense.category);
+  // Ohne Beschreibung zeigen wir den Kategorienamen als Titel
+  const title = expense.description || category.label;
+  const amount = formatCHF(expense.amountRappen);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${subtitle ?? category.label}, ${amount}`}
+      accessibilityHint="Öffnet die Ausgabe zum Bearbeiten"
+      style={({ pressed }) => [
+        styles.row,
+        isFirst && styles.first,
+        isLast && styles.last,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={[styles.dot, { backgroundColor: category.color }]} />
+      <View style={styles.texts}>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {subtitle ?? category.label}
+        </Text>
+      </View>
+      <Text style={styles.amount}>{amount}</Text>
+      {/* Trennlinie, eingerückt bis zur Textspalte – nicht bei der letzten Zeile */}
+      {!isLast && <View style={styles.divider} />}
+    </Pressable>
+  );
+}
+
+function createStyles(colors) {
+  return StyleSheet.create({
+    row: {
+      minHeight: 64,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingHorizontal: spacing.md,
+      backgroundColor: colors.card,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: colors.border,
+    },
+    first: {
+      borderTopWidth: 1,
+      borderTopLeftRadius: radius.card,
+      borderTopRightRadius: radius.card,
+    },
+    last: {
+      borderBottomWidth: 1,
+      borderBottomLeftRadius: radius.card,
+      borderBottomRightRadius: radius.card,
+    },
+    pressed: { backgroundColor: colors.pressed },
+    dot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    texts: {
+      flex: 1,
+      gap: 2,
+    },
+    title: {
+      ...typography.bodyMd,
+      fontFamily: typography.headlineSm.fontFamily,
+      color: colors.text,
+    },
+    subtitle: {
+      ...typography.labelSm,
+      color: colors.textSecondary,
+    },
+    amount: {
+      ...typography.currencyMd,
+      color: colors.text,
+    },
+    divider: {
+      position: 'absolute',
+      left: 40,
+      right: spacing.md,
+      bottom: 0,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+  });
+}

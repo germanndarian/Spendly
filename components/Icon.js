@@ -1,0 +1,11 @@
+// Einheitliche Icons: Feather (feine Outline-Icons) als Standard.
+// Face ID und Fingerabdruck gibt es bei Feather nicht – dafür nehmen wir
+// MaterialCommunityIcons (family="mci").
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+
+export default function Icon({ name, size = 20, color, family = 'feather' }) {
+  if (family === 'mci') {
+    return <MaterialCommunityIcons name={name} size={size} color={color} />;
+  }
+  return <Feather name={name} size={size} color={color} />;
+}
