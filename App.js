@@ -1,11 +1,12 @@
 // Einstiegspunkt der App: lädt die Schriften und baut die "Hüllen" auf,
-// die alle Screens brauchen (Safe Area, Farbschema, Navigation).
+// die alle Screens brauchen (Safe Area, Daten, Farbschema, Navigation).
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Newsreader_400Regular, Newsreader_700Bold } from '@expo-google-fonts/newsreader';
+import { DataProvider } from './storage/DataContext';
 import { ThemeProvider } from './theme/ThemeContext';
 import RootNavigator from './navigation/RootNavigator';
 
@@ -32,11 +33,15 @@ export default function App() {
     return null;
   }
 
+  // Reihenfolge ist wichtig: Das Farbschema steht in der Datenbank,
+  // deshalb liegt der DataProvider aussen.
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <RootNavigator />
-      </ThemeProvider>
+      <DataProvider>
+        <ThemeProvider>
+          <RootNavigator />
+        </ThemeProvider>
+      </DataProvider>
     </SafeAreaProvider>
   );
 }

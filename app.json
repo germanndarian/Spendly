@@ -32,6 +32,15 @@
             "backgroundColor": "#121413"
           }
         }
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Spendly verwendet Face ID, damit nur du deine Ausgaben sehen kannst."
+        }
       ]
     ],
     "backgroundColor": "#F6F5F1"

@@ -1,34 +1,229 @@
 // Screen 1 · Entsperren (Startscreen, Special Feature)
-// Phase 1: nur das Layout. Beide Buttons entsperren direkt.
-// Die echte Prüfung mit Face ID / Fingerabdruck und Code folgt in Phase 3.
-import { useMemo } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+// Zustände:
+// - 'checking' : prüft Code und Biometrie
+// - 'biometric': Button "Mit Face ID entsperren" (bei Fehler Hinweis + erneut)
+// - 'code'     : eigener 6-stelliger Code über den Zahlenblock
+// - 'setup'    : allererster Start – Code festlegen (zweimal eingeben)
+// - 'confirm'  : Code zur Sicherheit wiederholen
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import { radius, spacing } from '../theme/spacing';
 import Button from '../components/Button';
+import CodeDots from '../components/CodeDots';
 import Icon from '../components/Icon';
+import Keypad from '../components/Keypad';
 import Pill from '../components/Pill';
 import Wordmark from '../components/Wordmark';
+import { useData } from '../storage/DataContext';
+import { hasPin, PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
+import {
+  authenticate,
+  BIOMETRIC_ICON,
+  BIOMETRIC_NAME,
+  checkBiometrics,
+  getUnavailableText,
+  UNLOCK_LABEL,
+} from '../utils/biometrics';
 
-// Android spricht von Fingerabdruck, iOS von Face ID
-const IS_ANDROID = Platform.OS === 'android';
-const BIOMETRIC_LABEL = IS_ANDROID ? 'Mit Fingerabdruck entsperren' : 'Mit Face ID entsperren';
-const BIOMETRIC_ICON = IS_ANDROID ? 'fingerprint' : 'face-recognition';
-const PRIVACY_TEXT = IS_ANDROID
-  ? 'Deine Fingerabdruckdaten verlassen nie dein Gerät.'
-  : 'Deine Gesichtsdaten verlassen nie dein Gerät.';
+const MAX_ATTEMPTS = 3; // danach geht es nur noch über den Code
+
+// Titel und Untertitel je Zustand
+const TEXTS = {
+  code: { title: 'Code eingeben', subtitle: `Gib deinen ${PIN_LENGTH}-stelligen Code ein.` },
+  setup: { title: 'Code festlegen', subtitle: `Wähle einen ${PIN_LENGTH}-stelligen Code für Spendly.` },
+  confirm: { title: 'Code bestätigen', subtitle: 'Gib denselben Code nochmals ein.' },
+};
 
 export default function LockScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { settings, deleteAllData } = useData();
+
+  const [mode, setMode] = useState('checking');
+  const [biometry, setBiometry] = useState({ available: false, reason: null });
+  const [code, setCode] = useState('');
+  const [firstCode, setFirstCode] = useState(''); // beim Festlegen: erste Eingabe
+  const [message, setMessage] = useState(null); // Fehler- oder Hinweistext
+  const [attempts, setAttempts] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  // Beim Öffnen: Gibt es schon einen Code? Steht Biometrie zur Verfügung?
+  useEffect(() => {
+    let active = true;
+
+    async function prepare() {
+      let codeExists = false;
+      let biometryState = { available: false, reason: 'error' };
+      try {
+        [codeExists, biometryState] = await Promise.all([hasPin(), checkBiometrics()]);
+      } catch (error) {
+        // Lieber die Code-Eingabe zeigen als im Ladezustand stehen bleiben
+        console.warn('Sperre konnte nicht geprüft werden:', error);
+        if (active) {
+          setMode('code');
+          setMessage('Die Sperre konnte nicht geprüft werden. Entsperre Spendly mit deinem Code.');
+        }
+        return;
+      }
+      if (!active) return;
+
+      setBiometry(biometryState);
+
+      if (!codeExists) {
+        // Allererster Start: zuerst einen Code festlegen
+        setMode('setup');
+      } else if (biometryState.available && settings.biometricEnabled) {
+        setMode('biometric');
+      } else {
+        setMode('code');
+        // Hinweis nur, wenn Biometrie nicht geht – nicht, wenn sie
+        // in den Einstellungen bewusst ausgeschaltet wurde
+        if (!biometryState.available) {
+          setMessage(getUnavailableText(biometryState.reason));
+        }
+      }
+    }
+
+    prepare();
+    return () => {
+      active = false;
+    };
+  }, [settings.biometricEnabled]);
 
   // replace statt navigate: Der Lock-Screen wird ersetzt,
-  // man kann also nicht mit "Zurück" wieder hierher.
-  function unlock() {
+  // man kommt also nicht mit "Zurück" wieder hierher.
+  const unlock = useCallback(() => {
     navigation.replace('Main');
+  }, [navigation]);
+
+  // --- Biometrie --------------------------------------------------------
+  async function runBiometric() {
+    setBusy(true);
+    setMessage(null);
+    const result = await authenticate();
+    setBusy(false);
+
+    if (result.success) {
+      unlock();
+      return;
+    }
+
+    const nextAttempts = attempts + 1;
+    setAttempts(nextAttempts);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+    if (nextAttempts >= MAX_ATTEMPTS) {
+      // Nach 3 Fehlversuchen nicht in der Sackgasse stehen lassen
+      setMode('code');
+      setMessage(`${BIOMETRIC_NAME} hat ${MAX_ATTEMPTS} Mal nicht funktioniert. Entsperre Spendly mit deinem Code.`);
+    } else {
+      setMessage(`${BIOMETRIC_NAME} hat dich nicht erkannt.`);
+    }
   }
+
+  // --- Code -------------------------------------------------------------
+  function handleDigit(digit) {
+    if (busy || code.length >= PIN_LENGTH) return;
+
+    const next = code + digit;
+    setCode(next);
+    setMessage(null);
+
+    if (next.length === PIN_LENGTH) {
+      submitCode(next);
+    }
+  }
+
+  function handleDelete() {
+    setCode((current) => current.slice(0, -1));
+    setMessage(null);
+  }
+
+  async function submitCode(enteredCode) {
+    setBusy(true);
+    try {
+      if (mode === 'setup') {
+        // Erste Eingabe merken und zur Bestätigung wechseln
+        setFirstCode(enteredCode);
+        setCode('');
+        setMode('confirm');
+        return;
+      }
+
+      if (mode === 'confirm') {
+        if (enteredCode === firstCode) {
+          await setPin(enteredCode);
+          unlock();
+        } else {
+          failCode('Die beiden Codes stimmen nicht überein. Bitte nochmals von vorn.');
+          setFirstCode('');
+          setMode('setup');
+        }
+        return;
+      }
+
+      // mode === 'code'
+      if (await verifyPin(enteredCode)) {
+        unlock();
+      } else {
+        failCode('Falscher Code. Versuche es nochmals.');
+      }
+    } catch (error) {
+      console.warn('Code konnte nicht geprüft werden:', error);
+      failCode('Der Code konnte nicht geprüft werden. Versuche es nochmals.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function failCode(text) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setCode('');
+    setMessage(text);
+  }
+
+  // "Code vergessen?" – ohne Konto gibt es nur den Weg über das Löschen.
+  function handleForgotCode() {
+    Alert.alert(
+      'Code vergessen?',
+      'Der Code lässt sich nicht wiederherstellen. Du kannst nur alle Daten löschen und neu starten.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Alle Daten löschen',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAllData();
+              setCode('');
+              setFirstCode('');
+              setMessage(null);
+              setMode('setup');
+            } catch (error) {
+              console.warn('Daten konnten nicht gelöscht werden:', error);
+              setMessage('Das hat nicht geklappt. Versuche es nochmals.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  // --- Anzeige ----------------------------------------------------------
+  if (mode === 'checking') {
+    return (
+      <SafeAreaView style={[styles.screen, styles.centerOnly]}>
+        <ActivityIndicator color={colors.accent} />
+      </SafeAreaView>
+    );
+  }
+
+  const isCodeMode = mode === 'code' || mode === 'setup' || mode === 'confirm';
+  const hasFailed = mode === 'biometric' && message !== null;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -37,26 +232,116 @@ export default function LockScreen({ navigation }) {
         <Pill label="Geschützt" dotColor={colors.accent} />
       </View>
 
-      {/* Mitte: Symbol und Begrüssung */}
-      <View style={styles.center}>
-        <View style={styles.iconCircle}>
-          <Icon family="mci" name={BIOMETRIC_ICON} size={44} color={colors.accent} />
-        </View>
-        <Text style={styles.title} accessibilityRole="header">
-          Willkommen zurück
-        </Text>
-        <Text style={styles.subtitle}>Entsperre Spendly, um deine Ausgaben zu sehen.</Text>
-      </View>
+      {isCodeMode ? (
+        <View style={styles.codeArea}>
+          {/* Hinweis, wenn Face ID nicht zur Verfügung steht */}
+          {message !== null && (
+            <View style={styles.banner} accessibilityRole="alert">
+              <Icon name="info" size={18} color={colors.textSecondary} />
+              <Text style={styles.bannerText}>{message}</Text>
+              {/* Ein Link in die Einstellungen hilft nur, wenn es dort
+                  überhaupt etwas zu erlauben gibt */}
+              {biometry.reason === 'notEnrolled' || biometry.reason === 'error' ? (
+                <Pressable
+                  onPress={() => Linking.openSettings()}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.bannerLink, pressed && styles.pressedSurface]}
+                >
+                  <Text style={styles.bannerLinkText}>Öffnen</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          )}
 
-      {/* Unten in der Daumenzone: Aktionen */}
-      <View style={styles.actions}>
-        <Button title={BIOMETRIC_LABEL} icon={BIOMETRIC_ICON} iconFamily="mci" onPress={unlock} />
-        <Button title="Code verwenden" variant="text" size="medium" onPress={unlock} />
-        <View style={styles.privacy}>
-          <Icon name="lock" size={14} color={colors.textSecondary} />
-          <Text style={styles.privacyText}>{PRIVACY_TEXT}</Text>
+          <Text style={styles.codeTitle} accessibilityRole="header">
+            {TEXTS[mode].title}
+          </Text>
+          <Text style={styles.subtitle}>{TEXTS[mode].subtitle}</Text>
+
+          <View style={styles.dots}>
+            <CodeDots length={PIN_LENGTH} filled={code.length} hasError={message !== null} />
+          </View>
+
+          <Keypad onDigit={handleDigit} onDelete={handleDelete} disabled={busy} />
+
+          {/* Zurück zu Face ID, falls es zur Verfügung steht */}
+          {mode === 'code' && biometry.available && settings.biometricEnabled && (
+            <Button
+              title={UNLOCK_LABEL}
+              variant="text"
+              size="medium"
+              icon={BIOMETRIC_ICON}
+              iconFamily="mci"
+              onPress={() => {
+                setCode('');
+                setMessage(null);
+                setAttempts(0);
+                setMode('biometric');
+              }}
+              style={styles.bottomAction}
+            />
+          )}
+
+          {mode === 'code' && (
+            <Button
+              title="Code vergessen?"
+              variant="text"
+              size="medium"
+              onPress={handleForgotCode}
+              style={styles.bottomAction}
+            />
+          )}
         </View>
-      </View>
+      ) : (
+        <>
+          {/* Mitte: Symbol und Begrüssung */}
+          <View style={styles.center}>
+            <View style={[styles.iconCircle, hasFailed && styles.iconCircleError]}>
+              <Icon
+                family="mci"
+                name={BIOMETRIC_ICON}
+                size={44}
+                color={hasFailed ? colors.danger : colors.accent}
+              />
+            </View>
+            <Text style={styles.title} accessibilityRole="header">
+              {hasFailed ? message : 'Willkommen zurück'}
+            </Text>
+            <Text style={styles.subtitle}>
+              {hasFailed
+                ? 'Versuch es nochmals oder verwende deinen Code.'
+                : 'Entsperre Spendly, um deine Ausgaben zu sehen.'}
+            </Text>
+          </View>
+
+          {/* Unten in der Daumenzone: Aktionen */}
+          <View style={styles.actions}>
+            <Button
+              title={hasFailed ? 'Erneut versuchen' : UNLOCK_LABEL}
+              icon={hasFailed ? 'refresh-cw' : BIOMETRIC_ICON}
+              iconFamily={hasFailed ? undefined : 'mci'}
+              onPress={runBiometric}
+              disabled={busy}
+            />
+            <Button
+              title="Code verwenden"
+              variant="text"
+              size="medium"
+              onPress={() => {
+                setMessage(null);
+                setMode('code');
+              }}
+            />
+            <View style={styles.privacy}>
+              <Icon name="lock" size={14} color={colors.textSecondary} />
+              <Text style={styles.privacyText}>
+                Deine biometrischen Daten verlassen nie dein Gerät.
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -67,6 +352,10 @@ function createStyles(colors) {
       flex: 1,
       backgroundColor: colors.background,
       paddingHorizontal: spacing.screen,
+    },
+    centerOnly: {
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     topBar: {
       minHeight: 56,
@@ -89,6 +378,7 @@ function createStyles(colors) {
       backgroundColor: colors.accentSoft,
       marginBottom: spacing.lg,
     },
+    iconCircleError: { backgroundColor: colors.dangerSoft },
     title: {
       ...typography.headlineMd,
       color: colors.text,
@@ -98,7 +388,7 @@ function createStyles(colors) {
       ...typography.bodyLg,
       color: colors.textSecondary,
       textAlign: 'center',
-      maxWidth: 280,
+      maxWidth: 300,
     },
     actions: {
       gap: spacing.sm,
@@ -115,5 +405,51 @@ function createStyles(colors) {
       ...typography.labelSm,
       color: colors.textSecondary,
     },
+    // --- Code-Eingabe ---
+    codeArea: {
+      flex: 1,
+      alignItems: 'center',
+      paddingTop: spacing.sm,
+    },
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      alignSelf: 'stretch',
+      minHeight: 56,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.card,
+      marginBottom: spacing.lg,
+    },
+    bannerText: {
+      ...typography.labelMd,
+      color: colors.text,
+      flex: 1,
+    },
+    bannerLink: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.sm,
+      borderRadius: 8,
+    },
+    pressedSurface: { backgroundColor: colors.pressed },
+    bannerLinkText: {
+      ...typography.labelMd,
+      color: colors.accent,
+    },
+    codeTitle: {
+      ...typography.headlineLg,
+      color: colors.text,
+      textAlign: 'center',
+    },
+    dots: {
+      marginTop: spacing.lg,
+      marginBottom: spacing.xl,
+    },
+    bottomAction: { marginTop: spacing.sm },
   });
 }

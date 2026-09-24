@@ -91,3 +91,24 @@ export function formatLongDate(isoDate, today = new Date()) {
   const prefix = diff === 0 ? 'Heute, ' : diff === 1 ? 'Gestern, ' : '';
   return `${prefix}${formatShortDate(date)} ${date.getFullYear()}`;
 }
+
+// "12,50" oder "12.50" -> 1250 Rappen. Ungültige Eingaben ergeben null.
+// Das Komma ist erlaubt, weil viele Tastaturen es als Standard anbieten.
+export function parseAmountToRappen(text) {
+  const normalized = String(text).trim().replace(',', '.');
+  if (normalized === '' || normalized === '.' || !/^\d*\.?\d*$/.test(normalized)) {
+    return null;
+  }
+  const francs = Number(normalized);
+  if (!Number.isFinite(francs)) {
+    return null;
+  }
+  return Math.round(francs * 100);
+}
+
+// Anzahl Nachkommastellen einer Eingabe ("12.5" -> 1)
+export function countDecimals(text) {
+  const normalized = String(text).trim().replace(',', '.');
+  const separator = normalized.indexOf('.');
+  return separator === -1 ? 0 : normalized.length - separator - 1;
+}

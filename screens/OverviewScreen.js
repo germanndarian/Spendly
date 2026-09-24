@@ -1,6 +1,7 @@
 // Screen 2 · Übersicht (Tab)
 // Beantwortet die wichtigste Frage zuerst: "Wie viel darf ich heute noch ausgeben?"
-// Phase 1: statische Beispieldaten aus data/sampleData.js.
+// Die Zahlen kommen aus der Datenbank: Monatssumme und Tagessummen
+// rechnet SQLite aus (siehe storage/expenses.js).
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +9,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import Card from '../components/Card';
+import EmptyState from '../components/EmptyState';
 import ExpenseRow from '../components/ExpenseRow';
 import Fab from '../components/Fab';
 import Icon from '../components/Icon';
@@ -18,22 +20,21 @@ import ScreenHeader from '../components/ScreenHeader';
 import { getBudgetStatus } from '../utils/budget';
 import { getCategory } from '../utils/categories';
 import { sortNewestFirst } from '../utils/expenseList';
-import { formatCHF, formatDayLabel, formatMonthYear } from '../utils/format';
-import {
-  SAMPLE_BUDGET_RAPPEN,
-  SAMPLE_EXPENSES,
-  SAMPLE_SPENT_RAPPEN,
-  sampleDailyTotals,
-} from '../data/sampleData';
+import { formatCHF, formatDayLabel, formatMonthName, formatMonthYear } from '../utils/format';
+import { useData } from '../storage/DataContext';
 
 export default function OverviewScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const { expenses, budgetRappen, spentRappen, dailyTotals } = useData();
+
   const today = new Date();
-  const status = getBudgetStatus(SAMPLE_BUDGET_RAPPEN, SAMPLE_SPENT_RAPPEN, today);
-  const recentExpenses = sortNewestFirst(SAMPLE_EXPENSES).slice(0, 3);
+  const status = getBudgetStatus(budgetRappen, spentRappen, today);
+  // Die Liste kommt schon sortiert aus der Datenbank – wir zeigen die letzten drei
+  const recentExpenses = sortNewestFirst(expenses).slice(0, 3);
   const percent = Math.round(status.progress * 100);
+  const hasExpenses = expenses.length > 0;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -76,7 +77,7 @@ export default function OverviewScreen({ navigation }) {
           <View style={styles.progressBlock}>
             <View style={styles.progressTextRow}>
               <Text style={styles.progressText}>
-                {formatCHF(SAMPLE_SPENT_RAPPEN)} von {formatCHF(SAMPLE_BUDGET_RAPPEN)} ausgegeben
+                {formatCHF(spentRappen)} von {formatCHF(budgetRappen)} ausgegeben
               </Text>
               <Text style={styles.progressPercent}>{percent}%</Text>
             </View>
@@ -88,36 +89,46 @@ export default function OverviewScreen({ navigation }) {
         <View style={styles.section}>
           <MonthStrip
             today={today}
-            dailyTotals={sampleDailyTotals(today)}
+            dailyTotals={dailyTotals}
             dailyBudgetRappen={status.dailyBudgetRappen}
           />
         </View>
 
-        {/* Letzte 3 Ausgaben */}
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle} accessibilityRole="header">
-            Letzte Ausgaben
-          </Text>
-          <Pressable
-            onPress={() => navigation.navigate('History')}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.linkButton, pressed && styles.linkPressed]}
-          >
-            <Text style={styles.linkText}>Alle anzeigen</Text>
-          </Pressable>
-        </View>
-        <View>
-          {recentExpenses.map((expense, index) => (
-            <ExpenseRow
-              key={expense.id}
-              expense={expense}
-              subtitle={`${getCategory(expense.category).label} · ${formatDayLabel(expense.date, today)}`}
-              isFirst={index === 0}
-              isLast={index === recentExpenses.length - 1}
-              onPress={() => navigation.navigate('NewExpense', { expenseId: expense.id })}
-            />
-          ))}
-        </View>
+        {/* Letzte 3 Ausgaben – oder der Hinweis für den ersten Start */}
+        {hasExpenses ? (
+          <>
+            <View style={styles.listHeader}>
+              <Text style={styles.listTitle} accessibilityRole="header">
+                Letzte Ausgaben
+              </Text>
+              <Pressable
+                onPress={() => navigation.navigate('History')}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.linkButton, pressed && styles.linkPressed]}
+              >
+                <Text style={styles.linkText}>Alle anzeigen</Text>
+              </Pressable>
+            </View>
+            <View>
+              {recentExpenses.map((expense, index) => (
+                <ExpenseRow
+                  key={expense.id}
+                  expense={expense}
+                  subtitle={`${getCategory(expense.category).label} · ${formatDayLabel(expense.date, today)}`}
+                  isFirst={index === 0}
+                  isLast={index === recentExpenses.length - 1}
+                  onPress={() => navigation.navigate('NewExpense', { expenseId: expense.id })}
+                />
+              ))}
+            </View>
+          </>
+        ) : (
+          <EmptyState
+            icon="plus-circle"
+            title={`Noch keine Ausgaben im ${formatMonthName(today)}`}
+            description="Tippe auf +, um deine erste Ausgabe zu erfassen."
+          />
+        )}
       </ScrollView>
 
       <Fab onPress={() => navigation.navigate('NewExpense')} />

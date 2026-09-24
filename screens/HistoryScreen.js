@@ -1,7 +1,6 @@
 // Screen 4 · Verlauf (Tab)
-// Alle Ausgaben nach Tag gruppiert, mit Suche und Kategorie-Filter.
-// Phase 1: statische Beispieldaten. Suche und Filter funktionieren schon,
-// Löschen per Wischen folgt später.
+// Alle Ausgaben aus der Datenbank, nach Tag gruppiert,
+// mit Suche und Kategorie-Filter. Löschen per Wischen folgt später.
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +8,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
 import Chip from '../components/Chip';
+import EmptyState from '../components/EmptyState';
 import ExpenseRow from '../components/ExpenseRow';
 import Fab from '../components/Fab';
 import Icon from '../components/Icon';
@@ -16,7 +16,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import { CATEGORIES } from '../utils/categories';
 import { filterExpenses, groupByDay } from '../utils/expenseList';
 import { formatCHF, formatMonthYear } from '../utils/format';
-import { SAMPLE_EXPENSES } from '../data/sampleData';
+import { useData } from '../storage/DataContext';
 
 export default function HistoryScreen({ navigation }) {
   const { colors } = useTheme();
@@ -26,8 +26,18 @@ export default function HistoryScreen({ navigation }) {
   const [searchText, setSearchText] = useState('');
   const [categoryId, setCategoryId] = useState(null); // null = "Alle"
 
-  const filtered = filterExpenses(SAMPLE_EXPENSES, searchText, categoryId);
+  const { expenses } = useData();
+  const filtered = filterExpenses(expenses, searchText, categoryId);
   const sections = groupByDay(filtered);
+
+  // Unterscheidet "noch gar nichts erfasst" von "Filter liefert nichts"
+  const hasExpenses = expenses.length > 0;
+  const hasFilter = searchText.trim() !== '' || categoryId !== null;
+
+  function resetFilter() {
+    setSearchText('');
+    setCategoryId(null);
+  }
 
   const header = (
     <View>
@@ -107,7 +117,23 @@ export default function HistoryScreen({ navigation }) {
             onPress={() => navigation.navigate('NewExpense', { expenseId: item.id })}
           />
         )}
-        ListEmptyComponent={<Text style={styles.emptyText}>Keine Ausgaben gefunden.</Text>}
+        ListEmptyComponent={
+          hasExpenses ? (
+            <EmptyState
+              icon="search"
+              title="Keine Treffer"
+              description="Zu dieser Suche gibt es keine Ausgaben."
+              actionLabel={hasFilter ? 'Filter zurücksetzen' : undefined}
+              onAction={hasFilter ? resetFilter : undefined}
+            />
+          ) : (
+            <EmptyState
+              icon="plus-circle"
+              title="Noch keine Ausgaben"
+              description="Tippe auf +, um deine erste Ausgabe zu erfassen."
+            />
+          )
+        }
       />
 
       <Fab onPress={() => navigation.navigate('NewExpense')} />
@@ -177,12 +203,6 @@ function createStyles(colors) {
       ...typography.currencyMd,
       fontSize: 15,
       color: colors.textSecondary,
-    },
-    emptyText: {
-      ...typography.bodyMd,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: spacing.xl,
     },
   });
 }

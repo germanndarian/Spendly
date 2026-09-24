@@ -1,8 +1,21 @@
 // Screen 3 · Neue Ausgabe (Modal) – wird auch zum Bearbeiten verwendet.
-// Phase 1: nur das Layout. Validierung und Speichern folgen in Phase 2.
+// Die Eingaben werden in Echtzeit geprüft (utils/validation.js).
+// "Speichern" bleibt gesperrt, solange etwas fehlt oder falsch ist.
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
@@ -11,22 +24,95 @@ import Chip from '../components/Chip';
 import Icon from '../components/Icon';
 import Pill from '../components/Pill';
 import { CATEGORIES } from '../utils/categories';
-import { formatLongDate, toISODate } from '../utils/format';
+import { getBudgetStatus } from '../utils/budget';
+import { formatCHF, formatLongDate, parseAmountToRappen, parseISODate, toISODate } from '../utils/format';
+import { MAX_DESCRIPTION_LENGTH, validateExpense } from '../utils/validation';
+import { useData } from '../storage/DataContext';
 
 export default function NewExpenseScreen({ navigation, route }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { expenses, settings, budgetRappen, spentRappen, createExpense, editExpense } = useData();
 
   // Mit expenseId wird eine bestehende Ausgabe bearbeitet
-  const isEditMode = Boolean(route.params?.expenseId);
+  const expenseId = route.params?.expenseId;
+  const isEditMode = Boolean(expenseId);
+  const existing = isEditMode ? expenses.find((expense) => expense.id === expenseId) : null;
 
-  const [amountText, setAmountText] = useState('');
-  const [categoryId, setCategoryId] = useState(null);
-  const [description, setDescription] = useState('');
-  const [date] = useState(toISODate(new Date())); // Standard: heute
+  const today = new Date();
+
+  // Startwerte: beim Bearbeiten aus der Ausgabe, sonst leer bzw. heute
+  const [amountText, setAmountText] = useState(
+    existing ? (existing.amountRappen / 100).toFixed(2) : ''
+  );
+  const [categoryId, setCategoryId] = useState(
+    existing ? existing.category : settings.lastCategory
+  );
+  const [description, setDescription] = useState(existing ? existing.description : '');
+  const [date, setDate] = useState(existing ? existing.date : toISODate(today));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [amountTouched, setAmountTouched] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const { errors, isValid } = validateExpense(
+    { amountText, categoryId, description, date },
+    today
+  );
+
+  // Fehler erst zeigen, wenn im Feld schon etwas getippt wurde –
+  // ein leeres Formular soll nicht sofort rot sein.
+  const amountError = amountTouched ? errors.amount : null;
+  // Der Kategorie-Hinweis erscheint genau dann, wenn nur noch sie fehlt
+  const categoryError = !errors.amount && errors.category ? errors.category : null;
+
+  // "Heute noch frei" – hilft beim Einordnen des Betrags
+  const status = getBudgetStatus(budgetRappen, spentRappen, today);
 
   function close() {
     navigation.goBack();
+  }
+
+  function handleDateChange(event, selectedDate) {
+    // Android schliesst den Dialog selbst, iOS zeigt den Kalender im Screen
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (event.type === 'dismissed' || !selectedDate) {
+      return;
+    }
+    setDate(toISODate(selectedDate));
+  }
+
+  async function handleSave() {
+    if (!isValid || saving) return;
+
+    setSaving(true);
+    try {
+      const input = {
+        amountRappen: parseAmountToRappen(amountText),
+        category: categoryId,
+        description: description.trim(),
+        date,
+      };
+
+      if (isEditMode) {
+        await editExpense(expenseId, input);
+      } else {
+        await createExpense(input);
+      }
+
+      // Kurze Rückmeldung, dass es geklappt hat
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      close();
+    } catch (error) {
+      console.warn('Ausgabe konnte nicht gespeichert werden:', error);
+      Alert.alert(
+        'Nicht gespeichert',
+        'Die Ausgabe konnte nicht gespeichert werden. Versuche es nochmals.'
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -54,7 +140,10 @@ export default function NewExpenseScreen({ navigation, route }) {
               <Text style={styles.currency}>CHF</Text>
               <TextInput
                 value={amountText}
-                onChangeText={setAmountText}
+                onChangeText={(text) => {
+                  setAmountText(text);
+                  setAmountTouched(true);
+                }}
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="decimal-pad"
@@ -63,8 +152,20 @@ export default function NewExpenseScreen({ navigation, route }) {
                 accessibilityLabel="Betrag in Franken"
               />
             </View>
-            {/* Phase 1: fester Wert, ab Phase 2 aus den echten Daten berechnet */}
-            <Pill label="Heute noch frei: CHF 24.50" tone="accent" />
+            {amountError ? (
+              <Text style={styles.error} accessibilityRole="alert">
+                {amountError}
+              </Text>
+            ) : (
+              <Pill
+                label={
+                  status.isOverBudget
+                    ? `Budget überschritten um ${formatCHF(status.overByRappen)}`
+                    : `Heute noch frei: ${formatCHF(status.dailyAllowanceRappen)}`
+                }
+                tone={status.isOverBudget ? 'danger' : 'accent'}
+              />
+            )}
           </View>
 
           {/* Kategorie */}
@@ -80,10 +181,22 @@ export default function NewExpenseScreen({ navigation, route }) {
               />
             ))}
           </View>
+          {categoryError ? (
+            <Text style={[styles.error, styles.errorUnderChips]} accessibilityRole="alert">
+              {categoryError}
+            </Text>
+          ) : null}
 
           {/* Beschreibung (optional) */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Beschreibung</Text>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>Beschreibung (optional)</Text>
+              {description.length > 20 ? (
+                <Text style={styles.counter}>
+                  {description.length}/{MAX_DESCRIPTION_LENGTH}
+                </Text>
+              ) : null}
+            </View>
             <TextInput
               value={description}
               onChangeText={setDescription}
@@ -91,27 +204,63 @@ export default function NewExpenseScreen({ navigation, route }) {
               placeholderTextColor={colors.textTertiary}
               style={styles.fieldInput}
               returnKeyType="done"
+              maxLength={MAX_DESCRIPTION_LENGTH}
               accessibilityLabel="Beschreibung, optional"
             />
           </View>
 
-          {/* Datum (Auswahl folgt in Phase 2) */}
+          {/* Datum – nie in der Zukunft */}
           <Pressable
+            onPress={() => setShowDatePicker((current) => !current)}
             accessibilityRole="button"
-            accessibilityLabel={`Datum: ${formatLongDate(date)}`}
+            accessibilityLabel={`Datum: ${formatLongDate(date, today)}`}
+            accessibilityHint="Öffnet die Datumsauswahl"
             style={({ pressed }) => [styles.field, styles.dateField, pressed && styles.fieldPressed]}
           >
             <View>
               <Text style={styles.fieldLabel}>Datum</Text>
-              <Text style={styles.fieldValue}>{formatLongDate(date)}</Text>
+              <Text style={styles.fieldValue}>{formatLongDate(date, today)}</Text>
             </View>
             <Icon name="calendar" size={20} color={colors.textSecondary} />
           </Pressable>
+
+          {showDatePicker && (
+            <View style={styles.pickerBox}>
+              <DateTimePicker
+                value={parseISODate(date)}
+                mode="date"
+                // Zukünftige Daten gar nicht erst auswählbar machen
+                maximumDate={today}
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                onChange={handleDateChange}
+                accentColor={colors.accent}
+                // Der Kalender soll auch dem gewählten Erscheinungsbild folgen
+                themeVariant={isDark ? 'dark' : 'light'}
+              />
+              {Platform.OS === 'ios' && (
+                <Button
+                  title="Fertig"
+                  variant="secondary"
+                  size="medium"
+                  onPress={() => setShowDatePicker(false)}
+                />
+              )}
+            </View>
+          )}
         </ScrollView>
 
         {/* Speichern-Button unten in der Daumenzone */}
         <View style={styles.footer}>
-          <Button title="Ausgabe speichern" icon="arrow-right" iconPosition="right" onPress={close} />
+          <Button
+            title={isEditMode ? 'Änderungen speichern' : 'Ausgabe speichern'}
+            icon="arrow-right"
+            iconPosition="right"
+            onPress={handleSave}
+            disabled={!isValid || saving}
+            accessibilityHint={
+              isValid ? undefined : 'Betrag und Kategorie werden noch gebraucht'
+            }
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -182,6 +331,16 @@ function createStyles(colors) {
       minWidth: 120,
       padding: 0,
     },
+    error: {
+      ...typography.labelMd,
+      color: colors.danger,
+      textAlign: 'center',
+    },
+    errorUnderChips: {
+      textAlign: 'left',
+      marginTop: -spacing.sm,
+      marginBottom: spacing.md,
+    },
     label: {
       ...typography.labelMd,
       color: colors.textSecondary,
@@ -210,9 +369,19 @@ function createStyles(colors) {
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    fieldLabelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
     fieldLabel: {
       ...typography.labelSm,
       color: colors.textSecondary,
+    },
+    counter: {
+      ...typography.labelSm,
+      color: colors.textTertiary,
+      fontVariant: ['tabular-nums'],
     },
     fieldInput: {
       ...typography.bodyLg,
@@ -223,6 +392,15 @@ function createStyles(colors) {
     fieldValue: {
       ...typography.bodyLg,
       color: colors.text,
+    },
+    pickerBox: {
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.card,
+      padding: spacing.sm,
+      marginBottom: spacing.md,
+      gap: spacing.sm,
     },
     footer: {
       paddingHorizontal: spacing.screen,

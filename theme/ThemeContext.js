@@ -1,7 +1,9 @@
 // Stellt allen Screens das aktuelle Farbschema zur Verfügung.
 // Einstellung "Erscheinungsbild": 'light' (Hell), 'dark' (Dunkel) oder 'system'.
-import { createContext, useContext, useMemo, useState } from 'react';
+// Die Auswahl steht in der Datenbank und gilt darum auch nach einem Neustart.
+import { createContext, useCallback, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
+import { useData } from '../storage/DataContext';
 import { darkColors, lightColors } from './colors';
 
 const ThemeContext = createContext(null);
@@ -9,8 +11,17 @@ const ThemeContext = createContext(null);
 export function ThemeProvider({ children }) {
   // Farbschema des Handys ('light' oder 'dark')
   const systemScheme = useColorScheme();
-  // Auswahl der Person – wird in Phase 4 in den Einstellungen gespeichert
-  const [mode, setMode] = useState('system');
+  const { settings, updateSetting } = useData();
+  const mode = settings.appearance;
+
+  const setMode = useCallback(
+    (nextMode) => {
+      updateSetting('appearance', nextMode).catch((error) => {
+        console.warn('Erscheinungsbild konnte nicht gespeichert werden:', error);
+      });
+    },
+    [updateSetting]
+  );
 
   const value = useMemo(() => {
     const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
@@ -20,7 +31,7 @@ export function ThemeProvider({ children }) {
       mode,
       setMode,
     };
-  }, [mode, systemScheme]);
+  }, [mode, systemScheme, setMode]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
