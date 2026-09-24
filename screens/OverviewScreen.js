@@ -2,7 +2,7 @@
 // Beantwortet die wichtigste Frage zuerst: "Wie viel darf ich heute noch ausgeben?"
 // Die Zahlen kommen aus der Datenbank: Monatssumme und Tagessummen
 // rechnet SQLite aus (siehe storage/expenses.js).
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -27,7 +27,12 @@ export default function OverviewScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const { expenses, budgetRappen, spentRappen, dailyTotals } = useData();
+  const { expenses, settings, budgetRappen, spentRappen, dailyTotals, updateSetting } = useData();
+
+  // Der Tipp "Tippe auf +" erscheint nur beim ersten Mal (Konzept: "Hinweis gesehen").
+  // Der Wert wird beim Öffnen einmal festgehalten, damit der Tipp nicht
+  // mitten im Anschauen verschwindet.
+  const [showHint] = useState(() => !settings.hintSeen);
 
   const today = new Date();
   const status = getBudgetStatus(budgetRappen, spentRappen, today);
@@ -35,6 +40,15 @@ export default function OverviewScreen({ navigation }) {
   const recentExpenses = sortNewestFirst(expenses).slice(0, 3);
   const percent = Math.round(status.progress * 100);
   const hasExpenses = expenses.length > 0;
+
+  useEffect(() => {
+    // Sobald der Leerzustand mit Tipp gezeigt wurde, merken wir uns das
+    if (!hasExpenses && showHint && !settings.hintSeen) {
+      updateSetting('hintSeen', true).catch((error) => {
+        console.warn('Hinweis konnte nicht gespeichert werden:', error);
+      });
+    }
+  }, [hasExpenses, showHint, settings.hintSeen, updateSetting]);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -126,7 +140,9 @@ export default function OverviewScreen({ navigation }) {
           <EmptyState
             icon="plus-circle"
             title={`Noch keine Ausgaben im ${formatMonthName(today)}`}
-            description="Tippe auf +, um deine erste Ausgabe zu erfassen."
+            description={
+              showHint ? 'Tippe auf +, um deine erste Ausgabe zu erfassen.' : undefined
+            }
           />
         )}
       </ScrollView>

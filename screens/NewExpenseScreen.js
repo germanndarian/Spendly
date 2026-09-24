@@ -32,7 +32,8 @@ import { useData } from '../storage/DataContext';
 export default function NewExpenseScreen({ navigation, route }) {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { expenses, settings, budgetRappen, spentRappen, createExpense, editExpense } = useData();
+  const { expenses, settings, budgetRappen, spentRappen, createExpense, editExpense, showSnackbar } =
+    useData();
 
   // Mit expenseId wird eine bestehende Ausgabe bearbeitet
   const expenseId = route.params?.expenseId;
@@ -103,6 +104,7 @@ export default function NewExpenseScreen({ navigation, route }) {
 
       // Kurze Rückmeldung, dass es geklappt hat
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      showSnackbar({ message: 'Gespeichert' });
       close();
     } catch (error) {
       console.warn('Ausgabe konnte nicht gespeichert werden:', error);

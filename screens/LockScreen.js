@@ -6,7 +6,7 @@
 // - 'setup'    : allererster Start – Code festlegen (zweimal eingeben)
 // - 'confirm'  : Code zur Sicherheit wiederholen
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
@@ -50,6 +50,23 @@ export default function LockScreen({ navigation }) {
   const [message, setMessage] = useState(null); // Fehler- oder Hinweistext
   const [attempts, setAttempts] = useState(0);
   const [busy, setBusy] = useState(false);
+  // Pulsieren des Symbols, solange der Scan läuft (Feedback laut Ergonomie-Checkliste)
+  const [pulse] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    if (!busy) {
+      pulse.setValue(0);
+      return undefined;
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [busy, pulse]);
 
   // Beim Öffnen: Gibt es schon einen Code? Steht Biometrie zur Verfügung?
   useEffect(() => {
@@ -237,18 +254,19 @@ export default function LockScreen({ navigation }) {
           {/* Hinweis, wenn Face ID nicht zur Verfügung steht */}
           {message !== null && (
             <View style={styles.banner} accessibilityRole="alert">
-              <Icon name="info" size={18} color={colors.textSecondary} />
-              <Text style={styles.bannerText}>{message}</Text>
+              <View style={styles.bannerTop}>
+                <Icon name="info" size={18} color={colors.textSecondary} />
+                <Text style={styles.bannerText}>{message}</Text>
+              </View>
               {/* Ein Link in die Einstellungen hilft nur, wenn es dort
                   überhaupt etwas zu erlauben gibt */}
               {biometry.reason === 'notEnrolled' || biometry.reason === 'error' ? (
                 <Pressable
                   onPress={() => Linking.openSettings()}
                   accessibilityRole="button"
-                  hitSlop={8}
                   style={({ pressed }) => [styles.bannerLink, pressed && styles.pressedSurface]}
                 >
-                  <Text style={styles.bannerLinkText}>Öffnen</Text>
+                  <Text style={styles.bannerLinkText}>In Einstellungen erlauben</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -297,14 +315,20 @@ export default function LockScreen({ navigation }) {
         <>
           {/* Mitte: Symbol und Begrüssung */}
           <View style={styles.center}>
-            <View style={[styles.iconCircle, hasFailed && styles.iconCircleError]}>
+            <Animated.View
+              style={[
+                styles.iconCircle,
+                hasFailed && styles.iconCircleError,
+                { transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }] },
+              ]}
+            >
               <Icon
                 family="mci"
                 name={BIOMETRIC_ICON}
                 size={44}
                 color={hasFailed ? colors.danger : colors.accent}
               />
-            </View>
+            </Animated.View>
             <Text style={styles.title} accessibilityRole="header">
               {hasFailed ? message : 'Willkommen zurück'}
             </Text>
@@ -412,9 +436,6 @@ function createStyles(colors) {
       paddingTop: spacing.sm,
     },
     banner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
       alignSelf: 'stretch',
       minHeight: 56,
       paddingHorizontal: spacing.md,
@@ -425,15 +446,21 @@ function createStyles(colors) {
       backgroundColor: colors.card,
       marginBottom: spacing.lg,
     },
+    bannerTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
     bannerText: {
       ...typography.labelMd,
       color: colors.text,
       flex: 1,
     },
     bannerLink: {
-      minHeight: 44,
+      minHeight: 48,
       justifyContent: 'center',
       paddingHorizontal: spacing.sm,
+      marginLeft: 26, // bündig mit dem Text neben dem Symbol
       borderRadius: 8,
     },
     pressedSurface: { backgroundColor: colors.pressed },

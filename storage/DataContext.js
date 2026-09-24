@@ -27,6 +27,9 @@ export function DataProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   // Summen für die Übersicht – die rechnet SQLite direkt aus
   const [summary, setSummary] = useState({ monthTotalRappen: 0, dailyTotals: [] });
+  // Kurze Rückmeldung am unteren Rand (z. B. nach dem Löschen).
+  // Sie steht hier, damit sie auch nach dem Schliessen eines Modals sichtbar ist.
+  const [snackbar, setSnackbar] = useState(null);
 
   // Alles neu aus der Datenbank lesen (ohne Ladeanzeige).
   const refresh = useCallback(async () => {
@@ -103,6 +106,11 @@ export function DataProvider({ children }) {
     [refresh]
   );
 
+  // Die id sorgt dafür, dass bei einer neuen Meldung auch die 5 Sekunden
+  // wieder von vorne laufen.
+  const showSnackbar = useCallback((config) => setSnackbar({ ...config, id: Date.now() }), []);
+  const hideSnackbar = useCallback(() => setSnackbar(null), []);
+
   const updateSetting = useCallback(
     async (key, value) => {
       await saveSetting(key, value);
@@ -145,6 +153,9 @@ export function DataProvider({ children }) {
       updateSetting,
       deleteAllData,
       loadDemoData,
+      snackbar,
+      showSnackbar,
+      hideSnackbar,
     }),
     [
       status,
@@ -159,6 +170,9 @@ export function DataProvider({ children }) {
       updateSetting,
       deleteAllData,
       loadDemoData,
+      snackbar,
+      showSnackbar,
+      hideSnackbar,
     ]
   );
 

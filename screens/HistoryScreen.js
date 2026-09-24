@@ -1,8 +1,9 @@
 // Screen 4 · Verlauf (Tab)
-// Alle Ausgaben aus der Datenbank, nach Tag gruppiert,
-// mit Suche und Kategorie-Filter. Löschen per Wischen folgt später.
+// Alle Ausgaben aus der Datenbank, nach Tag gruppiert, mit Suche und
+// Kategorie-Filter. Nach links wischen löscht eine Ausgabe – 5 Sekunden
+// lang lässt sich das über die Snackbar rückgängig machen.
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
@@ -13,6 +14,7 @@ import ExpenseRow from '../components/ExpenseRow';
 import Fab from '../components/Fab';
 import Icon from '../components/Icon';
 import ScreenHeader from '../components/ScreenHeader';
+import SwipeableRow from '../components/SwipeableRow';
 import { CATEGORIES } from '../utils/categories';
 import { filterExpenses, groupByDay } from '../utils/expenseList';
 import { formatCHF, formatMonthYear } from '../utils/format';
@@ -26,7 +28,7 @@ export default function HistoryScreen({ navigation }) {
   const [searchText, setSearchText] = useState('');
   const [categoryId, setCategoryId] = useState(null); // null = "Alle"
 
-  const { expenses } = useData();
+  const { expenses, removeExpense, undoRemove, showSnackbar } = useData();
   const filtered = filterExpenses(expenses, searchText, categoryId);
   const sections = groupByDay(filtered);
 
@@ -37,6 +39,27 @@ export default function HistoryScreen({ navigation }) {
   function resetFilter() {
     setSearchText('');
     setCategoryId(null);
+  }
+
+  // Löschen mit Sicherheitsnetz: Die Ausgabe merken und über die
+  // Snackbar 5 Sekunden lang zurückholen können.
+  async function handleDelete(expense) {
+    try {
+      await removeExpense(expense.id);
+      showSnackbar({
+        message: 'Ausgabe gelöscht',
+        actionLabel: 'Rückgängig',
+        onAction: () => {
+          undoRemove(expense).catch((error) => {
+            console.warn('Ausgabe konnte nicht wiederhergestellt werden:', error);
+            Alert.alert('Nicht wiederhergestellt', 'Die Ausgabe konnte nicht zurückgeholt werden.');
+          });
+        },
+      });
+    } catch (error) {
+      console.warn('Ausgabe konnte nicht gelöscht werden:', error);
+      Alert.alert('Nicht gelöscht', 'Die Ausgabe konnte nicht gelöscht werden.');
+    }
   }
 
   const header = (
@@ -109,14 +132,20 @@ export default function HistoryScreen({ navigation }) {
             <Text style={styles.sectionTotal}>{formatCHF(section.totalRappen)}</Text>
           </View>
         )}
-        renderItem={({ item, index, section }) => (
-          <ExpenseRow
-            expense={item}
-            isFirst={index === 0}
-            isLast={index === section.data.length - 1}
-            onPress={() => navigation.navigate('NewExpense', { expenseId: item.id })}
-          />
-        )}
+        renderItem={({ item, index, section }) => {
+          const isFirst = index === 0;
+          const isLast = index === section.data.length - 1;
+          return (
+            <SwipeableRow isFirst={isFirst} isLast={isLast} onDelete={() => handleDelete(item)}>
+              <ExpenseRow
+                expense={item}
+                isFirst={isFirst}
+                isLast={isLast}
+                onPress={() => navigation.navigate('NewExpense', { expenseId: item.id })}
+              />
+            </SwipeableRow>
+          );
+        }}
         ListEmptyComponent={
           hasExpenses ? (
             <EmptyState

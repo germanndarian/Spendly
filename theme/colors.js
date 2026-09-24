@@ -23,6 +23,8 @@ export const lightColors = {
   overlay: 'rgba(21, 23, 26, 0.4)', // abgedunkelter Hintergrund hinter Dialogen
   snackbar: '#15171A', // dunkle Snackbar
   onSnackbar: '#FFFFFF',
+  // Helles Grün, damit "Rückgängig" auf der dunklen Snackbar lesbar bleibt
+  snackbarAction: '#7CC4A4',
 };
 
 export const darkColors = {
@@ -47,6 +49,8 @@ export const darkColors = {
   overlay: 'rgba(0, 0, 0, 0.6)',
   snackbar: '#EDECE7',
   onSnackbar: '#15171A',
+  // Im Dark Mode ist die Snackbar hell – darum das dunkle Grün
+  snackbarAction: '#1F5A45',
 };
 
 // Kategoriefarben (gleich in Hell und Dunkel)

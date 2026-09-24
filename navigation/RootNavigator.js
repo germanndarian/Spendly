@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../theme/ThemeContext';
 import { useData } from '../storage/DataContext';
 import EmptyState from '../components/EmptyState';
+import Snackbar from '../components/Snackbar';
 import { lockApp, navigationRef } from './navigationRef';
 import MainTabs from './MainTabs';
 import LockScreen from '../screens/LockScreen';
@@ -47,7 +48,7 @@ function useAutoLock(enabled) {
 
 export default function RootNavigator() {
   const { colors, isDark } = useTheme();
-  const { status, retry, settings } = useData();
+  const { status, retry, settings, snackbar, hideSnackbar } = useData();
 
   useAutoLock(settings.autoLockEnabled);
 
@@ -102,6 +103,17 @@ export default function RootNavigator() {
           options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>
+
+      {/* Liegt über allen Screens, damit die Meldung auch nach dem
+          Schliessen des Modals noch sichtbar ist */}
+      <Snackbar
+        key={snackbar?.id}
+        visible={snackbar !== null}
+        message={snackbar?.message}
+        actionLabel={snackbar?.actionLabel}
+        onAction={snackbar?.onAction}
+        onHide={hideSnackbar}
+      />
     </NavigationContainer>
   );
 }
