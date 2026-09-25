@@ -2,6 +2,7 @@
 // Screens verwenden diese Farben nie direkt, sondern immer über useTheme(),
 // damit der Dark Mode automatisch funktioniert.
 
+// Farben für das helle Design
 export const lightColors = {
   background: '#F6F5F1', // warmes Off-White (App-Hintergrund)
   card: '#FFFFFF', // Karten und Eingabefelder
@@ -28,6 +29,8 @@ export const lightColors = {
   snackbarAction: '#7CC4A4',
 };
 
+// Farben für das dunkle Design. Gleiche Namen wie oben, nur andere Werte.
+// So schreibt jeder Screen einfach colors.text – egal ob hell oder dunkel.
 export const darkColors = {
   background: '#121413',
   card: '#1B1E1C',

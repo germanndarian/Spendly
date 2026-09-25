@@ -41,13 +41,19 @@ const TEXTS = {
   confirm: { title: 'Code bestätigen', subtitle: 'Gib denselben Code nochmals ein.' },
 };
 
+// navigation kommt von React Navigation und erlaubt, den Screen zu wechseln
 export default function LockScreen({ navigation }) {
+  // Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
+  // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { settings, deleteAllData } = useData();
 
+  // In welchem Zustand ist der Screen gerade? (siehe Liste ganz oben)
   const [mode, setMode] = useState('checking');
+  // Steht Face ID zur Verfügung – und falls nicht, warum?
   const [biometry, setBiometry] = useState({ available: false, reason: null });
+  // Die bisher getippten Ziffern, z. B. '123'
   const [code, setCode] = useState('');
   const [firstCode, setFirstCode] = useState(''); // beim Festlegen: erste Eingabe
   // Zwei getrennte Texte, damit der Zahlenblock beim Tippen nicht springt:
@@ -55,16 +61,20 @@ export default function LockScreen({ navigation }) {
   // - message: Fehler (z. B. "Falscher Code"), verschwindet beim Weitertippen
   const [notice, setNotice] = useState(null);
   const [message, setMessage] = useState(null);
+  // Anzahl Face-ID-Fehlversuche
   const [attempts, setAttempts] = useState(0);
+  // true, solange gerade geprüft wird – dann sind die Tasten gesperrt
   const [busy, setBusy] = useState(false);
   // Pulsieren des Symbols, solange der Scan läuft (Feedback laut Ergonomie-Checkliste)
   const [pulse] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    // Kein Scan: Symbol in normaler Grösse lassen
     if (!busy) {
       pulse.setValue(0);
       return undefined;
     }
+    // Endlos wiederholen: in 0.6 s etwas grösser, in 0.6 s wieder normal
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
@@ -77,12 +87,15 @@ export default function LockScreen({ navigation }) {
 
   // Beim Öffnen: Gibt es schon einen Code? Steht Biometrie zur Verfügung?
   useEffect(() => {
+    // Wird der Screen geschlossen, bevor die Prüfung fertig ist, darf sie
+    // den State nicht mehr ändern. Dafür merken wir uns «active».
     let active = true;
 
     async function prepare() {
       let codeExists = false;
       let biometryState = { available: false, reason: 'error' };
       try {
+        // Beides gleichzeitig prüfen: Gibt es einen Code? Geht Face ID?
         [codeExists, biometryState] = await Promise.all([hasPin(), checkBiometrics()]);
       } catch (error) {
         // Lieber die Code-Eingabe zeigen als im Ladezustand stehen bleiben
@@ -100,6 +113,7 @@ export default function LockScreen({ navigation }) {
       if (!codeExists) {
         // Allererster Start: zuerst einen Code festlegen
         setMode('setup');
+      // Code vorhanden und Face ID erlaubt: den Face-ID-Button zeigen
       } else if (biometryState.available && settings.biometricEnabled) {
         setMode('biometric');
       } else {
@@ -128,6 +142,8 @@ export default function LockScreen({ navigation }) {
   async function runBiometric() {
     setBusy(true);
     setMessage(null);
+    // Jetzt erscheint der Face-ID-Dialog des Systems.
+    // await wartet, bis die Person fertig ist.
     const result = await authenticate();
     setBusy(false);
 
@@ -136,6 +152,7 @@ export default function LockScreen({ navigation }) {
       return;
     }
 
+    // Den Fehler in einen einfachen Fall übersetzen (siehe utils/biometrics.js)
     const outcome = classifyAuthError(result.error);
 
     // Bewusst abgebrochen: einfach hier bleiben, das zählt nicht als Fehlversuch
@@ -155,6 +172,7 @@ export default function LockScreen({ navigation }) {
       return;
     }
 
+    // Echter Fehlversuch: mitzählen und kurz vibrieren
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -167,6 +185,7 @@ export default function LockScreen({ navigation }) {
     }
   }
 
+  // Zur Code-Eingabe wechseln, optional mit einem Hinweis oben
   function switchToCode(text) {
     setCode('');
     setMessage(null);
@@ -175,23 +194,31 @@ export default function LockScreen({ navigation }) {
   }
 
   // --- Code -------------------------------------------------------------
+  // Wird bei jedem Tipp auf eine Zahl aufgerufen
   function handleDigit(digit) {
+    // Während der Prüfung oder wenn schon 6 Ziffern da sind: nichts tun
     if (busy || code.length >= PIN_LENGTH) return;
 
     const next = code + digit;
     setCode(next);
     setMessage(null);
 
+    // Sobald 6 Ziffern da sind, automatisch prüfen – ohne OK-Taste
     if (next.length === PIN_LENGTH) {
       submitCode(next);
     }
   }
 
+  // Löschtaste: die letzte Ziffer entfernen
   function handleDelete() {
     setCode((current) => current.slice(0, -1));
     setMessage(null);
   }
 
+  // Prüft den fertigen 6-stelligen Code. Was passiert, hängt vom Zustand ab:
+  // - setup:   ersten Code merken
+  // - confirm: mit dem ersten vergleichen und speichern
+  // - code:    mit dem gespeicherten Code vergleichen
   async function submitCode(enteredCode) {
     setBusy(true);
     try {
@@ -216,6 +243,7 @@ export default function LockScreen({ navigation }) {
       }
 
       // mode === 'code'
+      // Eingabe mit dem gespeicherten Hash vergleichen (siehe storage/pin.js)
       if (await verifyPin(enteredCode)) {
         unlock();
       } else {
@@ -224,11 +252,13 @@ export default function LockScreen({ navigation }) {
     } catch (error) {
       console.warn('Code konnte nicht geprüft werden:', error);
       failCode('Der Code konnte nicht geprüft werden. Versuche es nochmals.');
+    // finally läuft immer – egal ob es geklappt hat oder nicht
     } finally {
       setBusy(false);
     }
   }
 
+  // Falscher Code: vibrieren, Punkte leeren, Fehler anzeigen
   function failCode(text) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     setCode('');
@@ -264,6 +294,7 @@ export default function LockScreen({ navigation }) {
   }
 
   // --- Anzeige ----------------------------------------------------------
+  // Noch am Prüfen: nur eine Ladeanzeige
   if (mode === 'checking') {
     return (
       <SafeAreaView style={[styles.screen, styles.centerOnly]}>
@@ -272,16 +303,20 @@ export default function LockScreen({ navigation }) {
     );
   }
 
+  // Zahlenblock anzeigen? (Code eingeben, Code festlegen oder bestätigen)
   const isCodeMode = mode === 'code' || mode === 'setup' || mode === 'confirm';
+  // Face ID ist fehlgeschlagen -> rotes Symbol und «Erneut versuchen»
   const hasFailed = mode === 'biometric' && message !== null;
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* Oben: Logo und «Geschützt» */}
       <View style={styles.topBar}>
         <Wordmark />
         <Pill label="Geschützt" dotColor={colors.accent} />
       </View>
 
+      {/* Entweder der Zahlenblock (Code) oder die Face-ID-Ansicht */}
       {isCodeMode ? (
         <View style={styles.codeArea}>
           {/* Hinweis, wenn Face ID nicht zur Verfügung steht */}
@@ -305,6 +340,7 @@ export default function LockScreen({ navigation }) {
             </View>
           )}
 
+          {/* Titel und Untertitel je nach Schritt (siehe TEXTS oben) */}
           <Text style={styles.codeTitle} accessibilityRole="header">
             {TEXTS[mode].title}
           </Text>
@@ -312,6 +348,7 @@ export default function LockScreen({ navigation }) {
               an derselben Stelle (Muskelgedächtnis beim Code-Tippen) */}
           <Text style={[styles.subtitle, styles.codeSubtitle]}>{TEXTS[mode].subtitle}</Text>
 
+          {/* Sechs Punkte zeigen, wie viele Ziffern schon getippt sind */}
           <View style={styles.dots}>
             <CodeDots length={PIN_LENGTH} filled={code.length} hasError={message !== null} />
           </View>
@@ -321,6 +358,7 @@ export default function LockScreen({ navigation }) {
             <FieldError message={message} align="center" />
           </View>
 
+          {/* Eigener Zahlenblock mit grossen Tasten (72 × 72 pt) */}
           <Keypad onDigit={handleDigit} onDelete={handleDelete} disabled={busy} />
 
           {/* Zurück zu Face ID, falls es zur Verfügung steht */}
@@ -342,6 +380,7 @@ export default function LockScreen({ navigation }) {
             />
           )}
 
+          {/* «Code vergessen?» nur beim Entsperren, nicht beim Festlegen */}
           {mode === 'code' && (
             <Button
               title="Code vergessen?"
@@ -356,6 +395,7 @@ export default function LockScreen({ navigation }) {
         <>
           {/* Mitte: Symbol und Begrüssung */}
           <View style={styles.center}>
+            {/* Animated.View kann sich bewegen: Der Kreis pulsiert während des Scans */}
             <Animated.View
               style={[
                 styles.iconCircle,
@@ -408,6 +448,7 @@ export default function LockScreen({ navigation }) {
   );
 }
 
+// Alle Styles dieses Screens. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
     screen: {

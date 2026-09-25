@@ -6,8 +6,11 @@ import { radius } from '../theme/spacing';
 
 export default function Card({ children, padded = true, style }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Mehrere Styles als Liste: Der spätere gewinnt. So kann «style» von aussen
+  // etwas anpassen, z. B. einen Abstand.
   return <View style={[styles.card, padded && styles.padded, style]}>{children}</View>;
 }
 

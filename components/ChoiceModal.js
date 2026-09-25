@@ -18,6 +18,7 @@ export default function ChoiceModal({
   onCancel,
 }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -30,11 +31,13 @@ export default function ChoiceModal({
           {description ? <Text style={styles.description}>{description}</Text> : null}
 
           <View style={styles.list} accessibilityRole="radiogroup">
+            {/* Eine Zeile pro Auswahl. Die gewählte bekommt ein Häkchen. */}
             {options.map((option, index) => {
               const selected = option.key === selectedKey;
               return (
                 <Pressable
                   key={option.label}
+                  // Auswahl an den Screen zurückgeben
                   onPress={() => onSelect(option.key)}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selected }}

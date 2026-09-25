@@ -10,6 +10,8 @@ import { typography } from '../theme/typography';
 import { radius, spacing, TOUCH_MIN } from '../theme/spacing';
 import Icon from './Icon';
 
+// Props sind die Einstellungen, die man von aussen mitgibt, z. B.
+// <Button title="Speichern" onPress={handleSave} variant="primary" />
 export default function Button({
   title,
   onPress,
@@ -24,6 +26,7 @@ export default function Button({
   style,
 }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Textfarbe je nach Variante
@@ -32,6 +35,7 @@ export default function Button({
   if (variant === 'destructive') labelColor = colors.danger;
   if (disabled) labelColor = colors.textTertiary;
 
+  // Icon nur bauen, wenn eines angegeben ist
   const iconElement = icon ? <Icon name={icon} family={iconFamily} size={20} color={labelColor} /> : null;
 
   return (
@@ -41,17 +45,20 @@ export default function Button({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityHint={accessibilityHint}
+      // Screenreader sagt «deaktiviert», wenn man nicht tippen kann
       accessibilityState={{ disabled }}
       // Gedrückt-Zustand: Fläche wird dunkler bzw. grau
       style={({ pressed }) => [
         styles.base,
         size === 'large' ? styles.large : styles.medium,
         styles[variant],
+        // z. B. styles.primaryPressed – der Name wird aus der Variante zusammengesetzt
         pressed && !disabled && styles[`${variant}Pressed`],
         disabled && variant !== 'text' && styles.disabled,
         style,
       ]}
     >
+      {/* Icon links oder rechts vom Text */}
       {iconPosition === 'left' && iconElement}
       <Text style={[styles.label, { color: labelColor }]}>{title}</Text>
       {iconPosition === 'right' && iconElement}
@@ -59,6 +66,7 @@ export default function Button({
   );
 }
 
+// Pro Variante gibt es einen normalen und einen gedrückten Stil
 function createStyles(colors) {
   return StyleSheet.create({
     base: {

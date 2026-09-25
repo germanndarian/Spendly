@@ -24,8 +24,10 @@ export default function SettingsRow({
   accessibilityHint,
 }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Hat die Zeile einen Schalter? (false ist auch ein Wert, darum !== undefined)
   const hasSwitch = switchValue !== undefined;
   const labelColor = destructive ? colors.danger : disabled ? colors.textTertiary : colors.text;
   const iconColor = destructive ? colors.danger : disabled ? colors.textTertiary : colors.accent;
@@ -33,6 +35,8 @@ export default function SettingsRow({
   // Bei einer Schalter-Zeile schaltet ein Tipp auf die Zeile den Schalter um
   const handlePress = hasSwitch ? () => onSwitchChange?.(!switchValue) : onPress;
 
+  // Der Inhalt ist immer gleich – nur die Hülle unterscheidet sich:
+  // View (nur Anzeige) oder Pressable (tippbar)
   const content = (
     <>
       <View style={[styles.iconBox, destructive && styles.iconBoxDanger]}>

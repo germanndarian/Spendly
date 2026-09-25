@@ -20,6 +20,7 @@ export default function ProgressBar({ progress }) {
       <View
         style={[
           styles.fill,
+          // Breite in Prozent; grün im Budget, rot darüber
           { width: `${widthPercent}%`, backgroundColor: isOver ? colors.danger : colors.accent },
         ]}
       />

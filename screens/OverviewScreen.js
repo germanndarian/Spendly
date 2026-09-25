@@ -21,10 +21,14 @@ import { getExpenseTime, sortNewestFirst } from '../utils/expenseList';
 import { formatCHF, formatDayLabel, formatMonthName, formatMonthYear } from '../utils/format';
 import { useData } from '../storage/DataContext';
 
+// Screen «Übersicht». navigation erlaubt den Wechsel zu anderen Screens.
 export default function OverviewScreen({ navigation }) {
+  // Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
+  // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Daten aus dem DataContext (sie kommen aus der Datenbank)
   const { expenses, settings, budgetRappen, spentRappen, dailyTotals, updateSetting } = useData();
 
   // Der Tipp "Tippe auf +" erscheint nur beim ersten Mal (Konzept: "Hinweis gesehen").
@@ -33,9 +37,12 @@ export default function OverviewScreen({ navigation }) {
   const [showHint] = useState(() => !settings.hintSeen);
 
   const today = new Date();
+  // Alle Kennzahlen auf einmal: Heute noch frei, überschritten, Fortschritt …
+  // (siehe utils/budget.js)
   const status = getBudgetStatus(budgetRappen, spentRappen, today);
   // Die Liste kommt schon sortiert aus der Datenbank – wir zeigen die letzten drei
   const recentExpenses = sortNewestFirst(expenses).slice(0, 3);
+  // 0.755 -> 76 (Prozent für die Anzeige)
   const percent = Math.round(status.progress * 100);
   const hasExpenses = expenses.length > 0;
 
@@ -48,9 +55,13 @@ export default function OverviewScreen({ navigation }) {
     }
   }, [hasExpenses, showHint, settings.hintSeen, updateSetting]);
 
+  // SafeAreaView hält Abstand zu Notch und Bildschirmrand. Unten nicht
+  // (edges ohne 'bottom'), weil dort schon die Tab-Leiste ist.
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      {/* ScrollView: Der Inhalt lässt sich scrollen, wenn er länger als der Bildschirm ist */}
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Kopfbereich mit Logo, Titel, Monat und rechts «Noch X Tage» */}
         <ScreenHeader
           title="Übersicht"
           subtitle={formatMonthYear(today)}
@@ -61,6 +72,7 @@ export default function OverviewScreen({ navigation }) {
         <Card style={styles.section}>
           <View style={styles.heroHeader}>
             <Text style={styles.overline}>Heute noch frei</Text>
+            {/* && heisst: nur anzeigen, wenn die Bedingung stimmt */}
             {status.isOnTrack && <Pill label="Auf Kurs" tone="accent" />}
           </View>
 
@@ -120,6 +132,7 @@ export default function OverviewScreen({ navigation }) {
                 Letzte Ausgaben
               </Text>
               <Pressable
+                // Wechselt in den Tab «Verlauf»
                 onPress={() => navigation.navigate('History')}
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.linkButton, pressed && styles.linkPressed]}
@@ -128,6 +141,8 @@ export default function OverviewScreen({ navigation }) {
               </Pressable>
             </View>
             <View>
+              {/* map macht aus jeder Ausgabe eine Zeile. key hilft React, die Zeilen
+                 auseinanderzuhalten. isFirst/isLast geben der Liste runde Ecken. */}
               {recentExpenses.map((expense, index) => (
                 <ExpenseRow
                   key={expense.id}
@@ -135,6 +150,7 @@ export default function OverviewScreen({ navigation }) {
                   detail={getRecentDetail(expense, today)}
                   isFirst={index === 0}
                   isLast={index === recentExpenses.length - 1}
+                  // Öffnet das Formular zum Bearbeiten. expenseId sagt, welche Ausgabe.
                   onPress={() => navigation.navigate('NewExpense', { expenseId: expense.id })}
                 />
               ))}
@@ -174,6 +190,7 @@ export default function OverviewScreen({ navigation }) {
         )}
       </ScrollView>
 
+      {/* Runder «+»-Button unten rechts: öffnet das Formular «Neue Ausgabe» */}
       <Fab onPress={() => navigation.navigate('NewExpense')} />
     </SafeAreaView>
   );
@@ -187,6 +204,7 @@ function getRecentDetail(expense, today) {
   return day === 'Heute' && time ? `${day}, ${time}` : day;
 }
 
+// Alle Styles dieses Screens. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
     screen: {

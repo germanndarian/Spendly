@@ -38,6 +38,7 @@ export function createDemoExpenses(today = new Date()) {
   const expenses = [];
   let index = 0;
 
+  // Vom ältesten Tag (vor 29 Tagen) bis heute
   for (let daysAgo = DAYS - 1; daysAgo >= 0; daysAgo--) {
     // new Date() rechnet "0. Oktober" selbst in den 30. September um
     const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
@@ -45,6 +46,8 @@ export function createDemoExpenses(today = new Date()) {
     const count = day.getDate() % 3 === 0 ? 2 : 1;
 
     for (let i = 0; i < count; i++) {
+      // Die Vorlagen der Reihe nach verwenden. % fängt nach der letzten
+      // Vorlage wieder bei der ersten an.
       const [description, category, amountRappen] = TEMPLATES[index % TEMPLATES.length];
       expenses.push({
         id: Crypto.randomUUID(),

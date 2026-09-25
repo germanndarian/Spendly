@@ -13,5 +13,7 @@ export const CATEGORIES = [
 
 // Sucht eine Kategorie anhand der id. Unbekannte ids landen bei "Sonstiges".
 export function getCategory(id) {
+  // find sucht den ersten Eintrag mit passender id. Findet es nichts,
+  // nimmt ?? den letzten Eintrag der Liste (Sonstiges).
   return CATEGORIES.find((category) => category.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
 }

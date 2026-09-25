@@ -7,6 +7,7 @@ import { spacing } from '../theme/spacing';
 
 export default function CodeDots({ length, filled, hasError = false }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -15,6 +16,7 @@ export default function CodeDots({ length, filled, hasError = false }) {
       accessibilityRole="progressbar"
       accessibilityLabel={`${filled} von ${length} Ziffern eingegeben`}
     >
+      {/* Array.from erzeugt 6 Einträge -> 6 Punkte. Die ersten «filled» sind ausgefüllt. */}
       {Array.from({ length }, (_, index) => (
         <View
           key={index}

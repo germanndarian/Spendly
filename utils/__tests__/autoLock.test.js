@@ -2,6 +2,7 @@
 import { AUTO_LOCK_OPTIONS, getAutoLockLabel, shouldAutoLock } from '../autoLock';
 
 const MINUTE = 60 * 1000;
+// Fester Zeitpunkt (in ms), damit die Tests immer gleich laufen
 const NOW = 1_800_000_000_000;
 
 describe('shouldAutoLock', () => {

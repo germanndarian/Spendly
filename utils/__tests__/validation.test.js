@@ -12,6 +12,8 @@ import {
 
 const TODAY = new Date(2026, 8, 23);
 
+// Für jede Regel gibt es gültige und ungültige Beispiele.
+// null heisst: kein Fehler.
 describe('validateAmount (Pflichtfeld, > 0, max. 2 Nachkommastellen)', () => {
   test('gültige Beträge ergeben keinen Fehler', () => {
     expect(validateAmount('6.80')).toBeNull();

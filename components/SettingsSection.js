@@ -8,6 +8,7 @@ import Card from './Card';
 
 export default function SettingsSection({ title, footer, children }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -17,6 +18,7 @@ export default function SettingsSection({ title, footer, children }) {
           {title}
         </Text>
       ) : null}
+      {/* Die Zeilen (children) liegen zusammen in einer weissen Karte */}
       <Card padded={false}>{children}</Card>
       {footer ? <Text style={styles.footer}>{footer}</Text> : null}
     </View>

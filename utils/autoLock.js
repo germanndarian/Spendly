@@ -19,5 +19,6 @@ export function getAutoLockLabel(minutes) {
 // backgroundSince: Zeitpunkt (ms), seit dem die App im Hintergrund war, oder null
 export function shouldAutoLock(backgroundSince, now, minutes) {
   if (minutes === null || backgroundSince === null) return false;
+  // Zeit im Hintergrund (in ms) mit der Sperrzeit vergleichen (Minuten × 60 × 1000)
   return now - backgroundSince >= minutes * 60 * 1000;
 }

@@ -14,6 +14,7 @@ export function getRemainingDays(today) {
 export function getBudgetStatus(budgetRappen, spentRappen, today = new Date()) {
   const daysInMonth = getDaysInMonth(today);
   const remainingDays = getRemainingDays(today);
+  // Wie viel vom Budget noch übrig ist (negativ = überschritten)
   const remainingRappen = budgetRappen - spentRappen;
   const isOverBudget = remainingRappen < 0;
 
@@ -30,6 +31,7 @@ export function getBudgetStatus(budgetRappen, spentRappen, today = new Date()) {
     dailyAllowanceRappen: isOverBudget ? 0 : Math.floor(remainingRappen / remainingDays),
     // Durchschnittliches Tagesbudget – Grenze für den roten Punkt im Monatsstreifen
     dailyBudgetRappen: Math.floor(budgetRappen / daysInMonth),
+    // Anteil ausgegeben: 0.5 = 50 %. Bei einem Budget von 0 nicht durch 0 teilen.
     progress: budgetRappen > 0 ? spentRappen / budgetRappen : 0,
     isOnTrack: !isOverBudget && spentRappen <= plannedUntilToday,
   };

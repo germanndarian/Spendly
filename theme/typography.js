@@ -3,6 +3,7 @@
 // die passende Schriftdatei (z. B. Inter_600SemiBold). Sonst sieht es auf
 // Android falsch aus.
 
+// Namen der geladenen Schriftdateien (siehe useFonts in App.js)
 export const fonts = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',
@@ -15,6 +16,8 @@ export const fonts = {
 // dadurch stehen Beträge in Listen sauber untereinander.
 const tabular = { fontVariant: ['tabular-nums'] };
 
+// Fertige Textstile. Mit ...typography.bodyLg übernimmt ein Text Schrift,
+// Grösse und Zeilenhöhe auf einmal.
 export const typography = {
   // Grosse Serifen-Zahl, z. B. "CHF 24.50" auf der Übersicht
   displayHero: { fontFamily: fonts.serif, fontSize: 40, lineHeight: 48, letterSpacing: -0.8, ...tabular },

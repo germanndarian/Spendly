@@ -12,6 +12,7 @@ import { formatCHF } from '../utils/format';
 
 export default function ExpenseRow({ expense, detail, onPress, onDelete, isFirst = true, isLast = true }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const category = getCategory(expense.category);
@@ -31,6 +32,7 @@ export default function ExpenseRow({ expense, detail, onPress, onDelete, isFirst
       accessibilityHint="Öffnet die Ausgabe zum Bearbeiten"
       // Mit onDelete bietet der Screenreader zusätzlich "Löschen" an
       accessibilityActions={onDelete ? [{ name: 'delete', label: 'Löschen' }] : undefined}
+      // Wird aufgerufen, wenn der Screenreader die Aktion «Löschen» auslöst
       onAccessibilityAction={(event) => {
         if (event.nativeEvent.actionName === 'delete') onDelete?.();
       }}
@@ -41,6 +43,7 @@ export default function ExpenseRow({ expense, detail, onPress, onDelete, isFirst
         pressed && styles.pressed,
       ]}
     >
+      {/* Farbpunkt der Kategorie */}
       <View style={[styles.dot, { backgroundColor: category.color }]} />
       <View style={styles.texts}>
         <Text style={styles.title} numberOfLines={1}>
@@ -50,6 +53,7 @@ export default function ExpenseRow({ expense, detail, onPress, onDelete, isFirst
           {subtitle}
         </Text>
       </View>
+      {/* Betrag rechts, mit gleich breiten Ziffern (tabular-nums) */}
       <Text style={styles.amount}>{amount}</Text>
       {/* Trennlinie, eingerückt bis zur Textspalte – nicht bei der letzten Zeile */}
       {!isLast && <View style={styles.divider} />}

@@ -9,6 +9,8 @@ const DATABASE_NAME = 'spendly.db';
 // damit parallele Aufrufe nicht mehrere Verbindungen aufmachen.
 let databasePromise = null;
 
+// Alle anderen Dateien holen die Datenbank über diese Funktion.
+// Beim ersten Aufruf wird sie geöffnet, danach immer dieselbe zurückgegeben.
 export function getDatabase() {
   if (!databasePromise) {
     databasePromise = openDatabase();
@@ -33,10 +35,15 @@ async function openDatabase() {
 // Die Schema-Version steht in "PRAGMA user_version".
 // So können wir später Spalten ergänzen, ohne bestehende Daten zu verlieren.
 async function migrate(db) {
+  // Aktuelle Version lesen. Eine ganz neue Datenbank hat Version 0.
   const row = await db.getFirstAsync('PRAGMA user_version');
   let version = row?.user_version ?? 0;
 
   if (version === 0) {
+    // Version 0 -> 1: die beiden Tabellen anlegen.
+    // - expenses: eine Zeile pro Ausgabe
+    // - settings: Einstellungen als Schlüssel/Wert
+    // Der Index auf «date» macht die Suche nach einem Monat schneller.
     // Beträge stehen als ganze Rappen in einer INTEGER-Spalte.
     // Kommazahlen wären beim Rechnen ungenau (0.1 + 0.2 !== 0.3).
     await db.execAsync(`
@@ -57,5 +64,6 @@ async function migrate(db) {
     version = 1;
   }
 
+  // Neue Version speichern, damit beim nächsten Start nichts doppelt passiert
   await db.execAsync(`PRAGMA user_version = ${version}`);
 }

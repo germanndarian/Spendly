@@ -4,7 +4,10 @@ import { formatDayLabel, formatTime, toISODate } from './format';
 
 // Neueste zuerst: nach Datum, bei gleichem Datum nach Erfassungszeit
 export function sortNewestFirst(expenses) {
+  // [...expenses] macht eine Kopie – sort() würde sonst die Original-Liste verändern
   return [...expenses].sort((a, b) => {
+    // Daten im Format 'yyyy-mm-dd' lassen sich direkt als Text vergleichen.
+    // Rückgabe 1 heisst: b kommt vor a.
     if (a.date !== b.date) return a.date < b.date ? 1 : -1;
     return (b.createdAt ?? 0) - (a.createdAt ?? 0);
   });
@@ -24,7 +27,9 @@ export function getExpenseTime(expense) {
 export function filterExpenses(expenses, searchText, categoryId) {
   const query = searchText.trim().toLowerCase();
   return expenses.filter((expense) => {
+    // Andere Kategorie als der Filter: aussortieren
     if (categoryId && expense.category !== categoryId) return false;
+    // Kein Suchbegriff: alles behalten, was noch übrig ist
     if (!query) return true;
     const description = (expense.description ?? '').toLowerCase();
     const categoryLabel = getCategory(expense.category).label.toLowerCase();
@@ -37,6 +42,8 @@ export function filterExpenses(expenses, searchText, categoryId) {
 export function groupByDay(expenses, today = new Date()) {
   const sections = [];
   for (const expense of sortNewestFirst(expenses)) {
+    // Die Liste ist sortiert. Gehört die Ausgabe zum gleichen Tag wie der letzte
+    // Abschnitt, kommt sie dort dazu – sonst beginnt ein neuer Abschnitt.
     const last = sections[sections.length - 1];
     if (last && last.date === expense.date) {
       last.data.push(expense);

@@ -8,6 +8,7 @@ import Icon from './Icon';
 
 export default function Fab({ onPress }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -16,6 +17,7 @@ export default function Fab({ onPress }) {
       // Icon-Button ohne Text: Screenreader braucht eine Beschriftung
       accessibilityRole="button"
       accessibilityLabel="Neue Ausgabe erfassen"
+      // Pressable gibt «pressed» mit: Beim Drücken wird der Button dunkler
       style={({ pressed }) => [styles.fab, pressed && styles.pressed]}
     >
       <Icon name="plus" size={28} color={colors.onAccent} />

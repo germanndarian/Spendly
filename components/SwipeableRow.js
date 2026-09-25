@@ -12,6 +12,7 @@ const ACTION_WIDTH = 80; // Breite der Löschfläche (Konzept: 80 pt)
 
 export default function SwipeableRow({ children, onDelete, isFirst = false, isLast = false }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Als State statt als Ref: Der Wert bleibt über alle Renders gleich,
@@ -32,6 +33,8 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
     [translateX]
   );
 
+  // PanResponder wertet die Fingerbewegung aus. gesture.dx = wie weit
+  // der Finger waagrecht gewischt hat (negativ = nach links).
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -80,6 +83,7 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
         </Pressable>
       </View>
 
+      {/* Die Zeile selbst: Sie verschiebt sich mit dem Finger nach links */}
       <Animated.View style={{ transform: [{ translateX }] }} {...panResponder.panHandlers}>
         {children}
       </Animated.View>

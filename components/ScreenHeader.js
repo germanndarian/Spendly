@@ -9,6 +9,7 @@ import Wordmark from './Wordmark';
 
 export default function ScreenHeader({ title, subtitle, right }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -21,8 +22,10 @@ export default function ScreenHeader({ title, subtitle, right }) {
           <Text style={styles.title} accessibilityRole="header">
             {title}
           </Text>
+          {/* Untertitel nur, wenn einer übergeben wurde */}
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
+        {/* Optionales Element rechts, z. B. die Pill «Noch 8 Tage» */}
         {right}
       </View>
     </View>

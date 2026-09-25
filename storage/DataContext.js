@@ -19,12 +19,18 @@ import {
 import { DEFAULT_SETTINGS, loadSettings, resetSettings, saveSetting } from './settings';
 import { clearPin } from './pin';
 
+// Gemeinsamer Speicher für alle Daten (gleiches Prinzip wie ThemeContext)
 const DataContext = createContext(null);
 
+// Umschliesst die ganze App (siehe App.js). Alles darunter kann useData() verwenden.
 export function DataProvider({ children }) {
   // 'loading' beim Start, 'error' wenn die Datenbank nicht antwortet
   const [status, setStatus] = useState('loading');
+  // useState merkt sich einen Wert. Ruft man z. B. setExpenses(...) auf,
+  // zeichnet React alle Screens neu, die diesen Wert anzeigen.
+  // Alle Ausgaben, neueste zuerst:
   const [expenses, setExpenses] = useState([]);
+  // Einstellungen (Budget, Face ID, Sperrzeit …), zuerst die Standardwerte
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   // Summen für die Übersicht – die rechnet SQLite direkt aus
   const [summary, setSummary] = useState({ monthTotalRappen: 0, dailyTotals: [] });
@@ -38,6 +44,8 @@ export function DataProvider({ children }) {
     const monthPrefix = toISODate(today).slice(0, 7); // '2026-09'
     const daysInMonth = getDaysInMonth(today);
 
+    // Promise.all startet alle vier Abfragen gleichzeitig und wartet,
+    // bis alle fertig sind. Das ist schneller als eine nach der anderen.
     const [loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals] = await Promise.all([
       listExpenses(),
       loadSettings(),
@@ -45,6 +53,7 @@ export function DataProvider({ children }) {
       getDailyTotalsRappen(monthPrefix, daysInMonth),
     ]);
 
+    // Ergebnisse in den State schreiben -> die Screens zeigen die neuen Zahlen
     setExpenses(loadedExpenses);
     setSettings(loadedSettings);
     setSummary({ monthTotalRappen, dailyTotals });
@@ -62,6 +71,8 @@ export function DataProvider({ children }) {
     }
   }, [refresh]);
 
+  // Beim Start der App einmal alles laden. [load] heisst: nur neu ausführen,
+  // wenn sich die Funktion load ändert (passiert nicht).
   useEffect(() => {
     load();
   }, [load]);
@@ -70,6 +81,7 @@ export function DataProvider({ children }) {
   // vom neuen Tag (bzw. neuen Monat) sehen. Darum beim Zurückkommen aus dem
   // Hintergrund neu lesen.
   useEffect(() => {
+    // Letzter bekannter Zustand der App ('active', 'background' …)
     let previousState = AppState.currentState;
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (previousState === 'background' && nextState === 'active') {
@@ -86,6 +98,7 @@ export function DataProvider({ children }) {
   // Alle Aktionen schreiben zuerst in die Datenbank und lesen danach neu.
   // So zeigt die App nie etwas an, was nicht wirklich gespeichert ist.
 
+  // Neue Ausgabe speichern (Formular «Neue Ausgabe»)
   const createExpense = useCallback(
     async (input) => {
       const expense = await addExpense(input);
@@ -97,6 +110,7 @@ export function DataProvider({ children }) {
     [refresh]
   );
 
+  // Bestehende Ausgabe ändern (Formular «Ausgabe bearbeiten»)
   const editExpense = useCallback(
     async (id, input) => {
       await updateExpense(id, input);
@@ -137,6 +151,7 @@ export function DataProvider({ children }) {
     [refresh, showSnackbar]
   );
 
+  // Eine Einstellung speichern, z. B. updateSetting('budgetRappen', 90000)
   const updateSetting = useCallback(
     async (key, value) => {
       await saveSetting(key, value);
@@ -165,12 +180,15 @@ export function DataProvider({ children }) {
     [refresh]
   );
 
+  // Alles, was die Screens über useData() bekommen. useMemo stellt das Objekt
+  // nur neu zusammen, wenn sich einer der Werte in der Liste unten ändert.
   const value = useMemo(
     () => ({
       status,
       retry: load,
       expenses,
       settings,
+      // Abkürzungen, damit die Screens nicht so tief suchen müssen
       budgetRappen: settings.budgetRappen,
       spentRappen: summary.monthTotalRappen,
       dailyTotals: summary.dailyTotals,
@@ -208,6 +226,7 @@ export function DataProvider({ children }) {
 // Hook für die Screens: const { expenses, budgetRappen } = useData();
 export function useData() {
   const data = useContext(DataContext);
+  // Ohne DataProvider gibt es keine Daten – dann lieber eine klare Fehlermeldung
   if (!data) {
     throw new Error('useData muss innerhalb von <DataProvider> verwendet werden.');
   }

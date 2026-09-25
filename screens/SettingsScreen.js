@@ -28,21 +28,27 @@ const APPEARANCE_OPTIONS = [
   { id: 'system', label: 'System' },
 ];
 
+// Screen «Einstellungen»
 export default function SettingsScreen() {
+  // Farben und das gewählte Erscheinungsbild (mode) aus dem Theme
   const { colors, mode, setMode } = useTheme();
+  // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { expenses, settings, budgetRappen, updateSetting, deleteAllData, loadDemoData, showSnackbar } =
     useData();
 
+  // Welcher Dialog ist gerade offen? (true = sichtbar)
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [codeModalVisible, setCodeModalVisible] = useState(false);
   const [lockModalVisible, setLockModalVisible] = useState(false);
   // Steht Face ID / Fingerabdruck auf diesem Gerät zur Verfügung?
   const [biometry, setBiometry] = useState({ available: true, reason: null });
 
+  // Beim Öffnen einmal prüfen, ob Face ID geht. [] heisst: nur ein Mal.
   useEffect(() => {
     let active = true;
     checkBiometrics().then((result) => {
+      // Nur übernehmen, wenn der Screen noch offen ist
       if (active) setBiometry(result);
     });
     return () => {
@@ -58,11 +64,13 @@ export default function SettingsScreen() {
     });
   }
 
+  // Budget aus dem Dialog speichern: Text '800.00' -> 80000 Rappen
   function handleSaveBudget(text) {
     changeSetting('budgetRappen', parseAmountToRappen(text));
     setBudgetModalVisible(false);
   }
 
+  // «Alle Daten löschen»: zuerst eine Sicherheitsfrage (Alert mit zwei Buttons)
   function handleDeleteAll() {
     // Die Anzahl macht greifbar, was verloren geht
     const count = expenses.length === 1 ? '1 Ausgabe' : `${expenses.length} Ausgaben`;
@@ -89,6 +97,7 @@ export default function SettingsScreen() {
     );
   }
 
+  // Nur für die Präsentation: Beispiel-Ausgaben erzeugen und speichern
   async function handleDemoData() {
     try {
       const demoExpenses = createDemoExpenses();
@@ -105,6 +114,7 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader title="Einstellungen" />
 
+        {/* Jede SettingsSection ist eine Gruppe mit Überschrift und weisser Karte */}
         <SettingsSection title="Budget">
           <SettingsRow
             icon="credit-card"
@@ -117,6 +127,7 @@ export default function SettingsScreen() {
 
         <SettingsSection
           title="Sicherheit"
+          // Hinweis unter der Gruppe, falls Face ID hier nicht geht
           footer={biometry.available ? undefined : getUnavailableText(biometry.reason)}
         >
           <SettingsRow
@@ -125,6 +136,7 @@ export default function SettingsScreen() {
             hint={biometry.available ? undefined : `${BIOMETRIC_NAME} steht hier nicht zur Verfügung`}
             // Ohne Face ID steht der Schalter auf "aus", auch wenn er gespeichert "an" ist
             switchValue={biometry.available && settings.biometricEnabled}
+            // Schalter umgelegt -> neuen Wert sofort speichern
             onSwitchChange={(value) => changeSetting('biometricEnabled', value)}
             disabled={!biometry.available}
           />
@@ -153,6 +165,7 @@ export default function SettingsScreen() {
               <Chip
                 key={option.id}
                 label={option.label}
+                // Gewählt ist der Chip, dessen id dem aktuellen Erscheinungsbild entspricht
                 selected={mode === option.id}
                 onPress={() => setMode(option.id)}
               />
@@ -166,6 +179,7 @@ export default function SettingsScreen() {
         </SettingsSection>
 
         {/* Nur im Entwicklungsmodus sichtbar – für die Live-Demo */}
+        {/* __DEV__ ist nur beim Entwickeln true – in der fertigen App fehlt dieser Teil */}
         {__DEV__ && (
           <SettingsSection title="Entwicklung">
             <SettingsRow
@@ -181,10 +195,12 @@ export default function SettingsScreen() {
         <Text style={styles.version}>Spendly 1.0</Text>
       </ScrollView>
 
+      {/* Die Dialoge liegen ausserhalb der ScrollView. «visible» steuert, ob sie offen sind. */}
       <PromptModal
         visible={budgetModalVisible}
         title="Monatsbudget"
         description="Wie viel möchtest du pro Monat ausgeben?"
+        // Aktuelles Budget als Startwert: 80000 Rappen -> '800.00'
         initialValue={(budgetRappen / 100).toFixed(2)}
         prefix="CHF"
         keyboardType="decimal-pad"
@@ -197,6 +213,7 @@ export default function SettingsScreen() {
         visible={lockModalVisible}
         title="Automatisch sperren"
         description="Wie lange darf Spendly im Hintergrund sein, bevor es sich sperrt?"
+        // Aus der Liste der Sperrzeiten die Auswahl für den Dialog bauen
         options={AUTO_LOCK_OPTIONS.map((option) => ({ key: option.minutes, label: option.label }))}
         selectedKey={settings.autoLockMinutes}
         onSelect={(minutes) => {
@@ -218,6 +235,7 @@ export default function SettingsScreen() {
   );
 }
 
+// Alle Styles dieses Screens. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
     screen: {

@@ -17,6 +17,7 @@ export default function EmptyState({
   tone = 'neutral', // 'neutral' oder 'danger' (Fehler)
 }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isDanger = tone === 'danger';
 
@@ -28,7 +29,9 @@ export default function EmptyState({
       <Text style={styles.title} accessibilityRole="header">
         {title}
       </Text>
+      {/* Beschreibung nur, wenn eine übergeben wurde */}
       {description ? <Text style={styles.description}>{description}</Text> : null}
+      {/* Button nur, wenn Text und Aktion angegeben sind */}
       {actionLabel && onAction ? (
         <Button
           title={actionLabel}

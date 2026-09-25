@@ -13,6 +13,7 @@ const EXPENSES = [
   { id: 'coop', amountRappen: 1290, category: 'food', description: '', date: '2026-09-22', createdAt: 2 },
 ];
 
+// Hilfsfunktion: nur die ids einer Liste, damit die Vergleiche kurz bleiben
 const ids = (list) => list.map((expense) => expense.id);
 
 describe('getCategory', () => {
@@ -37,6 +38,7 @@ describe('sortNewestFirst', () => {
   test('verändert die Original-Liste nicht', () => {
     const before = ids(EXPENSES);
     sortNewestFirst(EXPENSES);
+    // toEqual vergleicht den Inhalt von Listen, toBe nur einzelne Werte
     expect(ids(EXPENSES)).toEqual(before);
   });
 });

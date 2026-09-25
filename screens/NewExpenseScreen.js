@@ -31,8 +31,12 @@ import { formatCHF, formatLongDate, parseAmountToRappen, parseISODate, toISODate
 import { MAX_DESCRIPTION_LENGTH, validateExpense } from '../utils/validation';
 import { useData } from '../storage/DataContext';
 
+// Screen «Neue Ausgabe» bzw. «Ausgabe bearbeiten» (als Modal).
+// route.params enthält die Werte, die beim Öffnen mitgegeben wurden.
 export default function NewExpenseScreen({ navigation, route }) {
+  // Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors, isDark } = useTheme();
+  // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     expenses,
@@ -48,11 +52,14 @@ export default function NewExpenseScreen({ navigation, route }) {
   // Mit expenseId wird eine bestehende Ausgabe bearbeitet
   const expenseId = route.params?.expenseId;
   const isEditMode = Boolean(expenseId);
+  // Die Ausgabe, die bearbeitet wird (oder null bei einer neuen)
   const existing = isEditMode ? expenses.find((expense) => expense.id === expenseId) : null;
 
   const today = new Date();
 
   // Startwerte: beim Bearbeiten aus der Ausgabe, sonst leer bzw. heute
+  // Jedes Feld hat seinen eigenen State. Der Betrag bleibt Text (z. B. '12,5'),
+  // solange getippt wird – in Rappen umgerechnet wird erst beim Speichern.
   const [amountText, setAmountText] = useState(
     existing ? (existing.amountRappen / 100).toFixed(2) : ''
   );
@@ -61,10 +68,15 @@ export default function NewExpenseScreen({ navigation, route }) {
   );
   const [description, setDescription] = useState(existing ? existing.description : '');
   const [date, setDate] = useState(existing ? existing.date : toISODate(today));
+  // Ist der Kalender gerade offen?
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Wurde im Betragsfeld schon etwas getippt? (für die Fehleranzeige)
   const [amountTouched, setAmountTouched] = useState(false);
+  // true, während gespeichert wird – verhindert doppeltes Speichern
   const [saving, setSaving] = useState(false);
 
+  // Bei jedem Neuzeichnen (also bei jedem Tastendruck) das ganze Formular prüfen.
+  // errors enthält pro Feld einen Fehlertext oder null.
   const { errors, isValid } = validateExpense(
     { amountText, categoryId, description, date },
     today
@@ -79,10 +91,12 @@ export default function NewExpenseScreen({ navigation, route }) {
   // "Heute noch frei" – hilft beim Einordnen des Betrags
   const status = getBudgetStatus(budgetRappen, spentRappen, today);
 
+  // Modal schliessen und zum vorherigen Screen zurück
   function close() {
     navigation.goBack();
   }
 
+  // Wird aufgerufen, wenn im Kalender ein Datum gewählt wird
   function handleDateChange(event, selectedDate) {
     // Android schliesst den Dialog selbst, iOS zeigt den Kalender im Screen
     if (Platform.OS === 'android') {
@@ -110,10 +124,13 @@ export default function NewExpenseScreen({ navigation, route }) {
   }
 
   async function handleSave() {
+    // Sicherheitshalber: nie speichern, wenn etwas ungültig ist oder schon gespeichert wird
     if (!isValid || saving) return;
 
     setSaving(true);
     try {
+      // Aus den Feldern ein Ausgaben-Objekt bauen. Der Betrag wird hier
+      // von Text in ganze Rappen umgerechnet ('12,50' -> 1250).
       const input = {
         amountRappen: parseAmountToRappen(amountText),
         category: categoryId,
@@ -121,6 +138,7 @@ export default function NewExpenseScreen({ navigation, route }) {
         date,
       };
 
+      // Bearbeiten ändert die bestehende Zeile, sonst kommt eine neue dazu
       if (isEditMode) {
         await editExpense(expenseId, input);
       } else {
@@ -159,6 +177,8 @@ export default function NewExpenseScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* KeyboardAvoidingView schiebt den Inhalt nach oben, wenn die Tastatur
+         aufgeht – so bleibt der Speichern-Button sichtbar (nur iOS nötig). */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Kopfzeile in drei Spalten: Abbrechen | Titel | leer.
             Die beiden Seiten sind gleich breit, dadurch steht der Titel in
@@ -196,6 +216,8 @@ export default function NewExpenseScreen({ navigation, route }) {
             <View style={styles.amountRow}>
               <Text style={styles.currency}>CHF</Text>
               <TextInput
+                // Kontrolliertes Feld: Der Wert kommt aus dem State,
+                // jede Eingabe landet über onChangeText wieder im State.
                 value={amountText}
                 onChangeText={(text) => {
                   setAmountText(text);
@@ -203,7 +225,9 @@ export default function NewExpenseScreen({ navigation, route }) {
                 }}
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
+                // Zahlentastatur mit Komma bzw. Punkt
                 keyboardType="decimal-pad"
+                // Tastatur öffnet sich sofort, man kann direkt lostippen
                 autoFocus
                 // Reicht bis CHF 9'999'999.99 – mehr passt nicht auf den Bildschirm
                 maxLength={10}
@@ -211,6 +235,7 @@ export default function NewExpenseScreen({ navigation, route }) {
                 accessibilityLabel="Betrag in Franken"
               />
             </View>
+            {/* Entweder die Fehlermeldung – oder als Hilfe «Heute noch frei» */}
             {amountError ? (
               <FieldError message={amountError} align="center" />
             ) : (
@@ -236,6 +261,7 @@ export default function NewExpenseScreen({ navigation, route }) {
                 key={category.id}
                 label={category.label}
                 dotColor={category.color}
+                // Der Chip ist gewählt, wenn seine id im State steht
                 selected={categoryId === category.id}
                 onPress={() => setCategoryId(category.id)}
               />
@@ -246,6 +272,7 @@ export default function NewExpenseScreen({ navigation, route }) {
           <View style={[styles.field, errors.description && styles.fieldError]}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>Beschreibung (optional)</Text>
+              {/* Zähler «25/40» erst ab 20 Zeichen, damit das Feld sonst ruhig bleibt */}
               {description.length > 20 ? (
                 <Text style={styles.counter}>
                   {description.length}/{MAX_DESCRIPTION_LENGTH}
@@ -267,6 +294,7 @@ export default function NewExpenseScreen({ navigation, route }) {
 
           {/* Datum – nie in der Zukunft */}
           <Pressable
+            // Tippen öffnet den Kalender, nochmals tippen schliesst ihn wieder
             onPress={() => setShowDatePicker((current) => !current)}
             accessibilityRole="button"
             accessibilityLabel={`Datum: ${formatLongDate(date, today)}`}
@@ -286,6 +314,7 @@ export default function NewExpenseScreen({ navigation, route }) {
           </Pressable>
           <FieldError message={errors.date} style={styles.errorUnderField} />
 
+          {/* Kalender nur zeigen, wenn er geöffnet wurde */}
           {showDatePicker && (
             <View style={styles.pickerBox}>
               <DateTimePicker
@@ -299,6 +328,7 @@ export default function NewExpenseScreen({ navigation, route }) {
                 // Der Kalender soll auch dem gewählten Erscheinungsbild folgen
                 themeVariant={isDark ? 'dark' : 'light'}
               />
+              {/* Auf iOS bleibt der Kalender im Screen offen, darum ein «Fertig»-Button */}
               {Platform.OS === 'ios' && (
                 <Button
                   title="Fertig"
@@ -331,6 +361,7 @@ export default function NewExpenseScreen({ navigation, route }) {
             icon="arrow-right"
             iconPosition="right"
             onPress={handleSave}
+            // Grau und nicht tippbar, solange etwas fehlt oder gerade gespeichert wird
             disabled={!isValid || saving}
             accessibilityHint={
               isValid ? undefined : 'Betrag und Kategorie werden noch gebraucht'
@@ -342,6 +373,7 @@ export default function NewExpenseScreen({ navigation, route }) {
   );
 }
 
+// Alle Styles dieses Screens. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
     screen: {

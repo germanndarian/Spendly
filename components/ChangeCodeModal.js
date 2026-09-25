@@ -25,6 +25,7 @@ const TEXTS = {
 
 export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [step, setStep] = useState('current');
@@ -94,14 +95,17 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
 
   function handleDigit(digit) {
     if (busy || code.length >= PIN_LENGTH) return;
+    // Neue Ziffer hinten anhängen
     const next = code + digit;
     setCode(next);
     setError(null);
+    // 6 Ziffern: diesen Schritt abschliessen
     if (next.length === PIN_LENGTH) {
       handleComplete(next);
     }
   }
 
+  // Gleicher Aufbau wie PromptModal: abgedunkelter Hintergrund, Karte in der Mitte
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>

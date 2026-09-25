@@ -28,6 +28,7 @@ export async function loadSettings() {
   const db = await getDatabase();
   const rows = await db.getAllAsync('SELECT key, value FROM settings');
 
+  // Mit den Standardwerten starten und dann mit den gespeicherten Werten überschreiben
   const settings = { ...DEFAULT_SETTINGS };
   for (const row of rows) {
     const parse = PARSERS[row.key];
@@ -46,6 +47,7 @@ export async function saveSetting(key, value) {
   await db.runAsync(
     'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
     key,
+    // Alles als Text speichern. null bzw. undefined wird zu '' (leerer Text).
     String(value ?? '')
   );
 }

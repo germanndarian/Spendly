@@ -11,6 +11,8 @@ export function validateAmount(text) {
   if (!value) {
     return 'Betrag ist ein Pflichtfeld.';
   }
+  // Die Prüfungen laufen der Reihe nach. Die erste, die nicht passt,
+  // liefert die Fehlermeldung.
   const rappen = parseAmountToRappen(value);
   if (rappen === null) {
     return 'Bitte nur Zahlen eingeben, z. B. 12.50.';
@@ -49,6 +51,7 @@ export function validateExpense({ amountText, categoryId, description, date }, t
     description: validateDescription(description),
     date: validateDate(date, today),
   };
+  // Gültig, wenn kein einziges Feld einen Fehler hat
   const isValid = Object.values(errors).every((error) => error === null);
   return { errors, isValid };
 }

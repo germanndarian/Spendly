@@ -16,6 +16,7 @@ const MIN_BAR_HEIGHT = 4; // auch Tage ohne Ausgaben sind sichtbar
 
 export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const year = today.getFullYear();
@@ -25,6 +26,8 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   // Der höchste Balken füllt die ganze Höhe
+  // ...dailyTotals verteilt die Liste in einzelne Werte.
+  // Die 1 verhindert eine Division durch 0, wenn noch nichts ausgegeben wurde.
   const maxValue = Math.max(dailyBudgetRappen, ...dailyTotals, 1);
 
   // Für jeden Tag des Monats einen Eintrag vorbereiten
@@ -37,9 +40,11 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
       isToday: day === todayDay,
       isFuture,
       isOver: !isFuture && total > dailyBudgetRappen,
+      // Höhe im Verhältnis zum höchsten Wert. -12 lässt oben Platz für die Punkte.
       height: isFuture ? 6 : Math.max(MIN_BAR_HEIGHT, (total / maxValue) * (BAR_AREA_HEIGHT - 12)),
     });
   }
+  // Wie viele Tage lagen über dem Tagesbudget? (für Legende und Screenreader)
   const overCount = days.filter((d) => d.isOver).length;
 
   const monthName = formatMonthName(today);
@@ -73,6 +78,7 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
 
         {/* Ein Balken pro Tag */}
         <View style={styles.bars}>
+          {/* Ein Balken pro Tag. Darüber: roter Punkt (über Budget) bzw. grüner Punkt (heute). */}
           {days.map((d) => (
             <View key={d.day} style={styles.dayColumn}>
               {d.isOver && <View style={styles.overDot} />}

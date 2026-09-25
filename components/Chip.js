@@ -8,8 +8,10 @@ import { typography } from '../theme/typography';
 import { radius, spacing, TOUCH_MIN } from '../theme/spacing';
 import Icon from './Icon';
 
+// label = Text, dotColor = farbiger Punkt, selected = gewählt, onPress = was beim Tippen passiert
 export default function Chip({ label, dotColor, selected = false, onPress }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -17,6 +19,7 @@ export default function Chip({ label, dotColor, selected = false, onPress }) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
+      // Screenreader sagt «ausgewählt»
       accessibilityState={{ selected }}
       style={({ pressed }) => [
         styles.chip,
@@ -24,6 +27,7 @@ export default function Chip({ label, dotColor, selected = false, onPress }) {
         pressed && (selected ? styles.selectedPressed : styles.pressed),
       ]}
     >
+      {/* Gewählt: Häkchen. Sonst: der farbige Punkt (falls es einen gibt). */}
       {selected ? (
         <Icon name="check" size={16} color={colors.onAccent} />
       ) : dotColor ? (

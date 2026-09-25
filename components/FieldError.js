@@ -9,8 +9,10 @@ import Icon from './Icon';
 
 export default function FieldError({ message, align = 'left', style }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Kein Fehler: gar nichts anzeigen (null zeichnet nichts)
   if (!message) return null;
 
   return (

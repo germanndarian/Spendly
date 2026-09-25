@@ -20,6 +20,7 @@ export default function PromptModal({
   onSave,
 }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [value, setValue] = useState(initialValue);
 
@@ -34,8 +35,11 @@ export default function PromptModal({
     }
   }
 
+  // Bei jeder Eingabe prüfen. Mit Fehler bleibt «Speichern» gesperrt.
   const error = validate ? validate(value) : null;
 
+  // Modal legt sich über den ganzen Screen. transparent + overlay-Farbe =
+  // abgedunkelter Hintergrund. onRequestClose: Zurück-Taste auf Android schliesst.
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <KeyboardAvoidingView
@@ -68,6 +72,7 @@ export default function PromptModal({
             <Button
               title="Speichern"
               size="medium"
+              // Den eingegebenen Text an den Screen zurückgeben
               onPress={() => onSave(value)}
               disabled={Boolean(error)}
               style={styles.action}

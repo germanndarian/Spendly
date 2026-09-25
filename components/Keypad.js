@@ -13,11 +13,15 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', 'delete'];
 
 export default function Keypad({ onDigit, onDelete, disabled = false }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.grid}>
+      {/* Eine Taste pro Eintrag in KEYS. Die Breite von 248 pt lässt genau drei
+         Tasten nebeneinander – flexWrap bricht danach in die nächste Zeile um. */}
       {KEYS.map((key, index) => {
+        // Leeres Feld unten links: nur Platzhalter, nicht tippbar
         if (key === null) {
           return <View key={`empty-${index}`} style={styles.key} />;
         }
@@ -26,6 +30,7 @@ export default function Keypad({ onDigit, onDelete, disabled = false }) {
         return (
           <Pressable
             key={key}
+            // Löschtaste oder Ziffer – was damit passiert, entscheidet der Screen
             onPress={() => (isDelete ? onDelete() : onDigit(key))}
             disabled={disabled}
             accessibilityRole="button"

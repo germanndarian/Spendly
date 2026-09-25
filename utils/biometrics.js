@@ -33,6 +33,7 @@ export async function checkBiometrics() {
       const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
       return { available: false, reason: types.length > 0 ? 'notAllowed' : 'noHardware' };
     }
+    // Sensor ist da – aber ist auch ein Gesicht bzw. Finger gespeichert?
     if (!(await LocalAuthentication.isEnrolledAsync())) {
       return { available: false, reason: 'notEnrolled' };
     }
@@ -44,6 +45,7 @@ export async function checkBiometrics() {
 
 // Passender Hinweis, wenn Biometrie nicht zur Verfügung steht.
 export function getUnavailableText(reason) {
+  // switch wählt je nach Grund den passenden Text aus
   switch (reason) {
     case 'expoGo':
       return `${BIOMETRIC_NAME} ist in Expo Go nicht erlaubt. Entsperre Spendly mit deinem Code.`;

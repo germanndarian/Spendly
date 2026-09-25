@@ -11,13 +11,17 @@ export const PIN_LENGTH = 6;
 // Zufälliges Salz (16 Bytes) als Hex-Text.
 // Das Salz sorgt dafür, dass gleiche Codes trotzdem verschiedene Hashes geben.
 async function createSalt() {
+  // 16 zufällige Bytes vom Betriebssystem
   const bytes = await Crypto.getRandomBytesAsync(16);
   return Array.from(bytes)
+    // Jedes Byte als zwei Hex-Zeichen, z. B. 10 -> '0a'
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 
 async function hashCode(code, salt) {
+  // SHA-256 macht aus «Salz:Code» eine lange Zeichenkette (den Hash).
+  // Aus dem Hash lässt sich der Code nicht zurückrechnen.
   return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, `${salt}:${code}`);
 }
 
@@ -37,8 +41,10 @@ export async function setPin(code) {
 // Eingegebenen Code prüfen: gleich salzen, gleich hashen, vergleichen.
 export async function verifyPin(code) {
   const stored = await SecureStore.getItemAsync(PIN_KEY);
+  // Noch kein Code festgelegt -> kann auch nicht stimmen
   if (!stored) return false;
 
+  // Gespeichert ist «salz:hash» – hier wieder in die zwei Teile trennen
   const [salt, digest] = stored.split(':');
   const candidate = await hashCode(code, salt);
   return candidate === digest;

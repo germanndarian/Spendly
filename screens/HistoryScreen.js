@@ -20,8 +20,11 @@ import { filterExpenses, getExpenseTime, groupByDay } from '../utils/expenseList
 import { formatCHF } from '../utils/format';
 import { useData } from '../storage/DataContext';
 
+// Screen «Verlauf»: alle Ausgaben, nach Tag gruppiert
 export default function HistoryScreen({ navigation }) {
+  // Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
+  // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Suchbegriff und Filter werden bewusst nicht gespeichert (kurzlebig)
@@ -29,6 +32,8 @@ export default function HistoryScreen({ navigation }) {
   const [categoryId, setCategoryId] = useState(null); // null = "Alle"
 
   const { expenses, removeExpense } = useData();
+  // Bei jeder Eingabe im Suchfeld wird neu gefiltert und gruppiert.
+  // Das geht schnell, weil es nur eine Liste im Speicher ist.
   const filtered = filterExpenses(expenses, searchText, categoryId);
   const sections = groupByDay(filtered);
 
@@ -42,6 +47,7 @@ export default function HistoryScreen({ navigation }) {
     ? `${filtered.length} Treffer`
     : `${expenses.length} ${expenses.length === 1 ? 'Buchung' : 'Buchungen'}`;
 
+  // «Filter zurücksetzen»: Suche leeren und wieder «Alle» wählen
   function resetFilter() {
     setSearchText('');
     setCategoryId(null);
@@ -57,6 +63,8 @@ export default function HistoryScreen({ navigation }) {
     }
   }
 
+  // Alles über der Liste: Titel, Suchfeld und Filter-Chips.
+  // Es wird der SectionList als ListHeaderComponent mitgegeben, damit es mitscrollt.
   const header = (
     <View>
       <ScreenHeader title="Verlauf" subtitle={countLabel} />
@@ -65,6 +73,8 @@ export default function HistoryScreen({ navigation }) {
       <View style={styles.search}>
         <Icon name="search" size={20} color={colors.textSecondary} />
         <TextInput
+          // Kontrolliertes Eingabefeld: Der Text steht im State, jede Änderung
+          // ruft setSearchText auf – und die Liste filtert sofort neu.
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Ausgaben durchsuchen"
@@ -74,11 +84,13 @@ export default function HistoryScreen({ navigation }) {
           autoCorrect={false}
           accessibilityLabel="Ausgaben durchsuchen"
         />
+        {/* Das «x» zum Leeren erscheint nur, wenn etwas im Suchfeld steht */}
         {searchText.length > 0 && (
           <Pressable
             onPress={() => setSearchText('')}
             accessibilityRole="button"
             accessibilityLabel="Suche löschen"
+            // hitSlop vergrössert die Tippfläche um 8 pt in jede Richtung
             hitSlop={8}
             style={({ pressed }) => [styles.clearButton, pressed && styles.clearPressed]}
           >
@@ -95,6 +107,7 @@ export default function HistoryScreen({ navigation }) {
         contentContainerStyle={styles.chips}
       >
         <Chip label="Alle" selected={categoryId === null} onPress={() => setCategoryId(null)} />
+        {/* Ein Chip pro Kategorie. Der gewählte ist grün und hat ein Häkchen. */}
         {CATEGORIES.map((category) => (
           <Chip
             key={category.id}
@@ -110,11 +123,16 @@ export default function HistoryScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      {/* SectionList: eine Liste mit Abschnitten (hier ein Abschnitt pro Tag).
+         Sie zeichnet nur die sichtbaren Zeilen – das bleibt auch bei vielen Ausgaben schnell. */}
       <SectionList
         sections={sections}
+        // Eindeutiger Schlüssel pro Zeile, damit React sie auseinanderhalten kann
         keyExtractor={(item) => item.id}
         ListHeaderComponent={header}
+        // Tages-Überschriften scrollen mit (bleiben nicht oben kleben)
         stickySectionHeadersEnabled={false}
+        // Ein Tipp auf die Liste funktioniert auch, wenn die Tastatur offen ist
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
         // Überschrift pro Tag mit Tagessumme
@@ -124,9 +142,11 @@ export default function HistoryScreen({ navigation }) {
             <Text style={styles.sectionTotal}>{formatCHF(section.totalRappen)}</Text>
           </View>
         )}
+        // So wird jede einzelne Ausgabe gezeichnet
         renderItem={({ item, index, section }) => {
           const isFirst = index === 0;
           const isLast = index === section.data.length - 1;
+          // SwipeableRow macht die Zeile wischbar: nach links -> «Löschen»
           return (
             <SwipeableRow isFirst={isFirst} isLast={isLast} onDelete={() => handleDelete(item)}>
               <ExpenseRow
@@ -143,6 +163,9 @@ export default function HistoryScreen({ navigation }) {
             </SwipeableRow>
           );
         }}
+        // Wird angezeigt, wenn die Liste leer ist. Zwei Fälle:
+        // - es gibt Ausgaben, aber der Filter findet keine -> «Keine Treffer»
+        // - es gibt noch gar keine Ausgaben -> Hinweis auf «+»
         ListEmptyComponent={
           hasExpenses ? (
             <EmptyState
@@ -166,11 +189,13 @@ export default function HistoryScreen({ navigation }) {
         }
       />
 
+      {/* Runder «+»-Button unten rechts: öffnet das Formular «Neue Ausgabe» */}
       <Fab onPress={() => navigation.navigate('NewExpense')} />
     </SafeAreaView>
   );
 }
 
+// Alle Styles dieses Screens. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
     screen: {

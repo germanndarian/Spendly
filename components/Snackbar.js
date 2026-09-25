@@ -14,6 +14,7 @@ const DURATION_MS = 5000;
 export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Als State statt als Ref: Der Wert bleibt gleich, darf aber beim
   // Rendern gelesen werden.
@@ -35,6 +36,7 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
     return () => clearTimeout(timer);
   }, [visible, message, slide, onHide]);
 
+  // Nichts anzeigen, wenn gerade keine Meldung da ist
   if (!visible) return null;
 
   return (
@@ -45,6 +47,8 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
         { bottom: insets.bottom + 72 },
         {
           opacity: slide,
+          // slide läuft von 0 nach 1: Die Snackbar kommt 16 pt von unten
+          // und wird dabei sichtbar (opacity)
           transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
         },
       ]}
@@ -58,6 +62,7 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
         {actionLabel && onAction ? (
           <Pressable
             onPress={() => {
+              // Zuerst die Aktion (z. B. Rückgängig), dann die Snackbar schliessen
               onAction();
               onHide();
             }}

@@ -9,6 +9,7 @@ import Icon from './Icon';
 
 export default function Pill({ label, dotColor, icon, tone = 'neutral', style }) {
   const { colors } = useTheme();
+  // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   // tone: 'neutral' (grau), 'accent' (grün), 'danger' (rot)

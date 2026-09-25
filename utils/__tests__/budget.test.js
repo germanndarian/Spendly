@@ -5,6 +5,8 @@ import { getBudgetStatus, getDaysInMonth, getRemainingDays } from '../budget';
 
 const SEPT_23 = new Date(2026, 8, 23);
 
+// Jeder Test ruft eine Funktion mit festen Werten auf und vergleicht das
+// Ergebnis mit dem erwarteten Wert (siehe Erklärung in format.test.js).
 describe('getDaysInMonth', () => {
   test('kennt die Länge jedes Monats', () => {
     expect(getDaysInMonth(new Date(2026, 8, 1))).toBe(30); // September
@@ -33,6 +35,7 @@ describe('getBudgetStatus', () => {
     expect(status.dailyAllowanceRappen).toBe(2450); // CHF 24.50
     expect(status.isOverBudget).toBe(false);
     expect(status.overByRappen).toBe(0);
+    // toBeCloseTo statt toBe: Kommazahlen sind nie ganz genau
     expect(status.progress).toBeCloseTo(0.755);
   });
 

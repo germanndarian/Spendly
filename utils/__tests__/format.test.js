@@ -18,6 +18,11 @@ import {
 // 23. September 2026 (Monate zählen in JavaScript ab 0)
 const TODAY = new Date(2026, 8, 23);
 
+// So funktioniert ein Test mit Jest:
+// - describe(...) fasst mehrere Tests zu einer Gruppe zusammen
+// - test(...) ist ein einzelner Testfall mit einem Namen
+// - expect(x).toBe(y) prüft, ob x genau y ist
+// Stimmt eine Prüfung nicht, meldet «npm test» den Fehler mit beiden Werten.
 describe('formatAmount / formatCHF', () => {
   test('formatiert Rappen mit zwei Nachkommastellen', () => {
     expect(formatAmount(2450)).toBe('24.50');
