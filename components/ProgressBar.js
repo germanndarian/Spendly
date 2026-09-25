@@ -12,7 +12,11 @@ export default function ProgressBar({ progress }) {
   const widthPercent = Math.min(Math.max(progress, 0), 1) * 100;
 
   return (
-    <View style={[styles.track, { backgroundColor: colors.subtle }]}>
+    <View
+      style={[styles.track, { backgroundColor: colors.subtle }]}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
+    >
       <View
         style={[
           styles.fill,

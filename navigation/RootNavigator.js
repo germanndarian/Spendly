@@ -110,6 +110,7 @@ export default function RootNavigator() {
         key={snackbar?.id}
         visible={snackbar !== null}
         message={snackbar?.message}
+        icon={snackbar?.icon}
         actionLabel={snackbar?.actionLabel}
         onAction={snackbar?.onAction}
         onHide={hideSnackbar}

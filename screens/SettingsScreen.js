@@ -29,7 +29,8 @@ const APPEARANCE_OPTIONS = [
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { settings, budgetRappen, updateSetting, deleteAllData, loadDemoData } = useData();
+  const { expenses, settings, budgetRappen, updateSetting, deleteAllData, loadDemoData, showSnackbar } =
+    useData();
 
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [codeModalVisible, setCodeModalVisible] = useState(false);
@@ -60,9 +61,11 @@ export default function SettingsScreen() {
   }
 
   function handleDeleteAll() {
+    // Die Anzahl macht greifbar, was verloren geht
+    const count = expenses.length === 1 ? '1 Ausgabe' : `${expenses.length} Ausgaben`;
     Alert.alert(
       'Alle Daten löschen?',
-      'Alle Ausgaben, Einstellungen und dein Code werden unwiderruflich von diesem Gerät gelöscht.',
+      `${count}, deine Einstellungen und dein Code werden von diesem Gerät gelöscht. Das kann nicht rückgängig gemacht werden.`,
       [
         { text: 'Abbrechen', style: 'cancel' },
         {
@@ -85,7 +88,9 @@ export default function SettingsScreen() {
 
   async function handleDemoData() {
     try {
-      await loadDemoData(createDemoExpenses());
+      const demoExpenses = createDemoExpenses();
+      await loadDemoData(demoExpenses);
+      showSnackbar({ message: `${demoExpenses.length} Demo-Ausgaben geladen` });
     } catch (error) {
       console.warn('Demo-Daten konnten nicht geladen werden:', error);
       Alert.alert('Nicht geladen', 'Die Demo-Daten konnten nicht geladen werden.');
@@ -115,7 +120,8 @@ export default function SettingsScreen() {
             icon="smile"
             label={UNLOCK_LABEL}
             hint={biometry.available ? undefined : `${BIOMETRIC_NAME} steht hier nicht zur Verfügung`}
-            switchValue={settings.biometricEnabled}
+            // Ohne Face ID steht der Schalter auf "aus", auch wenn er gespeichert "an" ist
+            switchValue={biometry.available && settings.biometricEnabled}
             onSwitchChange={(value) => changeSetting('biometricEnabled', value)}
             disabled={!biometry.available}
           />
@@ -162,7 +168,7 @@ export default function SettingsScreen() {
             <SettingsRow
               icon="database"
               label="Demo-Daten laden"
-              hint="Rund 40 Beispiel-Ausgaben"
+              hint="Rund 40 Beispiel-Ausgaben der letzten 30 Tage"
               onPress={handleDemoData}
               isLast
             />
@@ -189,7 +195,7 @@ export default function SettingsScreen() {
         onCancel={() => setCodeModalVisible(false)}
         onDone={() => {
           setCodeModalVisible(false);
-          Alert.alert('Code geändert', 'Beim nächsten Entsperren gilt der neue Code.');
+          showSnackbar({ message: 'Code geändert' });
         }}
       />
     </SafeAreaView>

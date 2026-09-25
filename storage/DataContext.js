@@ -2,6 +2,7 @@
 // Ausgaben, Monatsbudget und Einstellungen.
 // Die Screens sprechen nie direkt mit der Datenbank, sondern nur über diesen Hook.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Alert, AppState } from 'react-native';
 import { getDaysInMonth } from '../utils/budget';
 import { toISODate } from '../utils/format';
 import {
@@ -65,6 +66,22 @@ export function DataProvider({ children }) {
     load();
   }, [load]);
 
+  // Wer die App über Nacht offen lässt, soll am nächsten Morgen die Zahlen
+  // vom neuen Tag (bzw. neuen Monat) sehen. Darum beim Zurückkommen aus dem
+  // Hintergrund neu lesen.
+  useEffect(() => {
+    let previousState = AppState.currentState;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (previousState === 'background' && nextState === 'active') {
+        refresh().catch((error) => {
+          console.warn('Daten konnten nicht aktualisiert werden:', error);
+        });
+      }
+      previousState = nextState;
+    });
+    return () => subscription.remove();
+  }, [refresh]);
+
   // --- Aktionen ---------------------------------------------------------
   // Alle Aktionen schreiben zuerst in die Datenbank und lesen danach neu.
   // So zeigt die App nie etwas an, was nicht wirklich gespeichert ist.
@@ -89,27 +106,36 @@ export function DataProvider({ children }) {
     [refresh]
   );
 
-  const removeExpense = useCallback(
-    async (id) => {
-      await deleteExpense(id);
-      await refresh();
-    },
-    [refresh]
-  );
-
-  // "Rückgängig" nach dem Löschen
-  const undoRemove = useCallback(
-    async (expense) => {
-      await restoreExpense(expense);
-      await refresh();
-    },
-    [refresh]
-  );
-
   // Die id sorgt dafür, dass bei einer neuen Meldung auch die 5 Sekunden
   // wieder von vorne laufen.
   const showSnackbar = useCallback((config) => setSnackbar({ ...config, id: Date.now() }), []);
   const hideSnackbar = useCallback(() => setSnackbar(null), []);
+
+  // Löschen mit Sicherheitsnetz: Die gelöschte Ausgabe bleibt hier im
+  // Speicher und lässt sich über die Snackbar 5 Sekunden lang zurückholen.
+  // Wird im Verlauf (Wischen) und im Bearbeiten-Modal verwendet.
+  const removeExpense = useCallback(
+    async (expense) => {
+      await deleteExpense(expense.id);
+      await refresh();
+      showSnackbar({
+        message: 'Ausgabe gelöscht',
+        icon: 'trash-2',
+        actionLabel: 'Rückgängig',
+        onAction: async () => {
+          try {
+            // Mit gleicher id zurückschreiben – als wäre nichts passiert
+            await restoreExpense(expense);
+            await refresh();
+          } catch (error) {
+            console.warn('Ausgabe konnte nicht wiederhergestellt werden:', error);
+            Alert.alert('Nicht wiederhergestellt', 'Die Ausgabe konnte nicht zurückgeholt werden.');
+          }
+        },
+      });
+    },
+    [refresh, showSnackbar]
+  );
 
   const updateSetting = useCallback(
     async (key, value) => {
@@ -122,6 +148,8 @@ export function DataProvider({ children }) {
 
   // "Alle Daten löschen": Ausgaben, Einstellungen und Code
   const deleteAllData = useCallback(async () => {
+    // Ein offenes "Rückgängig" würde sonst eine Ausgabe zurückholen
+    setSnackbar(null);
     await deleteAllExpenses();
     await resetSettings();
     await clearPin();
@@ -149,7 +177,6 @@ export function DataProvider({ children }) {
       createExpense,
       editExpense,
       removeExpense,
-      undoRemove,
       updateSetting,
       deleteAllData,
       loadDemoData,
@@ -166,7 +193,6 @@ export function DataProvider({ children }) {
       createExpense,
       editExpense,
       removeExpense,
-      undoRemove,
       updateSetting,
       deleteAllData,
       loadDemoData,

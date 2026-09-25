@@ -29,27 +29,31 @@ const TEMPLATES = [
   ['Geschenk für Mama', 'shopping', 3500],
 ];
 
-// Erzeugt rund 40 Ausgaben, verteilt über den laufenden Monat bis heute.
+// Erzeugt rund 40 Ausgaben für die letzten 30 Tage bis heute.
+// So gibt es auch am Monatsanfang genug Beispiele im Verlauf.
 // Nie in der Zukunft – das wäre laut Validierung ungültig.
+const DAYS = 30;
+
 export function createDemoExpenses(today = new Date()) {
   const expenses = [];
   let index = 0;
 
-  for (let day = 1; day <= today.getDate(); day++) {
+  for (let daysAgo = DAYS - 1; daysAgo >= 0; daysAgo--) {
+    // new Date() rechnet "0. Oktober" selbst in den 30. September um
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
     // An jedem dritten Tag zwei Ausgaben, sonst eine
-    const count = day % 3 === 0 ? 2 : 1;
+    const count = day.getDate() % 3 === 0 ? 2 : 1;
 
     for (let i = 0; i < count; i++) {
       const [description, category, amountRappen] = TEMPLATES[index % TEMPLATES.length];
-      const date = new Date(today.getFullYear(), today.getMonth(), day);
       expenses.push({
         id: Crypto.randomUUID(),
         amountRappen,
         category,
         description,
-        date: toISODate(date),
+        date: toISODate(day),
         // Uhrzeit nur, damit mehrere Ausgaben am gleichen Tag eine Reihenfolge haben
-        createdAt: new Date(today.getFullYear(), today.getMonth(), day, 9 + i * 5).getTime(),
+        createdAt: new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9 + i * 5).getTime(),
       });
       index++;
     }

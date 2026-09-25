@@ -6,6 +6,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
 import Button from './Button';
+import FieldError from './FieldError';
 
 export default function PromptModal({
   visible,
@@ -60,11 +61,7 @@ export default function PromptModal({
             />
           </View>
 
-          {error ? (
-            <Text style={styles.error} accessibilityRole="alert">
-              {error}
-            </Text>
-          ) : null}
+          <FieldError message={error} />
 
           <View style={styles.actions}>
             <Button title="Abbrechen" variant="secondary" size="medium" onPress={onCancel} style={styles.action} />
@@ -130,10 +127,6 @@ function createStyles(colors) {
       ...typography.bodyLg,
       color: colors.text,
       fontVariant: ['tabular-nums'],
-    },
-    error: {
-      ...typography.labelMd,
-      color: colors.danger,
     },
     actions: {
       flexDirection: 'row',

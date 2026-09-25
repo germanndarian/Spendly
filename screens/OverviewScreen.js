@@ -9,7 +9,6 @@ import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import Card from '../components/Card';
-import EmptyState from '../components/EmptyState';
 import ExpenseRow from '../components/ExpenseRow';
 import Fab from '../components/Fab';
 import Icon from '../components/Icon';
@@ -18,7 +17,6 @@ import Pill from '../components/Pill';
 import ProgressBar from '../components/ProgressBar';
 import ScreenHeader from '../components/ScreenHeader';
 import { getBudgetStatus } from '../utils/budget';
-import { getCategory } from '../utils/categories';
 import { sortNewestFirst } from '../utils/expenseList';
 import { formatCHF, formatDayLabel, formatMonthName, formatMonthYear } from '../utils/format';
 import { useData } from '../storage/DataContext';
@@ -76,7 +74,13 @@ export default function OverviewScreen({ navigation }) {
             </View>
           ) : (
             <>
-              <Text style={styles.heroAmount} accessibilityLabel={`Heute noch frei: ${formatCHF(status.dailyAllowanceRappen)}`}>
+              <Text
+                style={styles.heroAmount}
+                // Grosse Beträge werden kleiner statt abgeschnitten
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                accessibilityLabel={`Heute noch frei: ${formatCHF(status.dailyAllowanceRappen)}`}
+              >
                 {formatCHF(status.dailyAllowanceRappen)}
               </Text>
               <Text style={styles.heroCaption}>
@@ -128,7 +132,7 @@ export default function OverviewScreen({ navigation }) {
                 <ExpenseRow
                   key={expense.id}
                   expense={expense}
-                  subtitle={`${getCategory(expense.category).label} · ${formatDayLabel(expense.date, today)}`}
+                  detail={formatDayLabel(expense.date, today)}
                   isFirst={index === 0}
                   isLast={index === recentExpenses.length - 1}
                   onPress={() => navigation.navigate('NewExpense', { expenseId: expense.id })}
@@ -137,13 +141,21 @@ export default function OverviewScreen({ navigation }) {
             </View>
           </>
         ) : (
-          <EmptyState
-            icon="plus-circle"
-            title={`Noch keine Ausgaben im ${formatMonthName(today)}`}
-            description={
-              showHint ? 'Tippe auf +, um deine erste Ausgabe zu erfassen.' : undefined
-            }
-          />
+          // Leerzustand als kompakte Karte: So bleibt er über dem "+"-Button
+          // und wird von ihm nicht verdeckt
+          <Card style={styles.emptyCard}>
+            <View style={styles.emptyIcon}>
+              <Icon name="file-text" size={22} color={colors.textSecondary} />
+            </View>
+            <View style={styles.emptyTexts}>
+              <Text style={styles.emptyTitle} accessibilityRole="header">
+                Noch keine Ausgaben im {formatMonthName(today)}
+              </Text>
+              {showHint ? (
+                <Text style={styles.emptyText}>Tippe auf +, um deine erste Ausgabe zu erfassen.</Text>
+              ) : null}
+            </View>
+          </Card>
         )}
       </ScrollView>
 
@@ -235,6 +247,31 @@ function createStyles(colors) {
       borderRadius: 8,
     },
     linkPressed: { backgroundColor: colors.pressed },
+    emptyCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    emptyIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.subtle,
+    },
+    emptyTexts: {
+      flex: 1,
+      gap: 2,
+    },
+    emptyTitle: {
+      ...typography.headlineSm,
+      color: colors.text,
+    },
+    emptyText: {
+      ...typography.bodyMd,
+      color: colors.textSecondary,
+    },
     linkText: {
       ...typography.labelMd,
       color: colors.accent,

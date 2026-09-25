@@ -14,6 +14,7 @@ import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
 import Button from '../components/Button';
 import CodeDots from '../components/CodeDots';
+import FieldError from '../components/FieldError';
 import Icon from '../components/Icon';
 import Keypad from '../components/Keypad';
 import Pill from '../components/Pill';
@@ -24,7 +25,9 @@ import {
   authenticate,
   BIOMETRIC_ICON,
   BIOMETRIC_NAME,
+  canFixInSettings,
   checkBiometrics,
+  classifyAuthError,
   getUnavailableText,
   UNLOCK_LABEL,
 } from '../utils/biometrics';
@@ -47,7 +50,11 @@ export default function LockScreen({ navigation }) {
   const [biometry, setBiometry] = useState({ available: false, reason: null });
   const [code, setCode] = useState('');
   const [firstCode, setFirstCode] = useState(''); // beim Festlegen: erste Eingabe
-  const [message, setMessage] = useState(null); // Fehler- oder Hinweistext
+  // Zwei getrennte Texte, damit der Zahlenblock beim Tippen nicht springt:
+  // - notice : Hinweis oben (z. B. "Face ID ist nicht erlaubt"), bleibt stehen
+  // - message: Fehler (z. B. "Falscher Code"), verschwindet beim Weitertippen
+  const [notice, setNotice] = useState(null);
+  const [message, setMessage] = useState(null);
   const [attempts, setAttempts] = useState(0);
   const [busy, setBusy] = useState(false);
   // Pulsieren des Symbols, solange der Scan läuft (Feedback laut Ergonomie-Checkliste)
@@ -82,7 +89,7 @@ export default function LockScreen({ navigation }) {
         console.warn('Sperre konnte nicht geprüft werden:', error);
         if (active) {
           setMode('code');
-          setMessage('Die Sperre konnte nicht geprüft werden. Entsperre Spendly mit deinem Code.');
+          setNotice('Die Sperre konnte nicht geprüft werden. Entsperre Spendly mit deinem Code.');
         }
         return;
       }
@@ -100,7 +107,7 @@ export default function LockScreen({ navigation }) {
         // Hinweis nur, wenn Biometrie nicht geht – nicht, wenn sie
         // in den Einstellungen bewusst ausgeschaltet wurde
         if (!biometryState.available) {
-          setMessage(getUnavailableText(biometryState.reason));
+          setNotice(getUnavailableText(biometryState.reason));
         }
       }
     }
@@ -129,17 +136,42 @@ export default function LockScreen({ navigation }) {
       return;
     }
 
+    const outcome = classifyAuthError(result.error);
+
+    // Bewusst abgebrochen: einfach hier bleiben, das zählt nicht als Fehlversuch
+    if (outcome === 'cancel') return;
+
+    // Im System-Dialog auf "Code verwenden" getippt
+    if (outcome === 'fallback') {
+      switchToCode(null);
+      return;
+    }
+
+    // Biometrie geht gerade gar nicht (z. B. Berechtigung in den iOS-
+    // Einstellungen entzogen): direkt zur Code-Eingabe mit Hinweis
+    if (outcome !== 'failed') {
+      setBiometry({ available: false, reason: outcome });
+      switchToCode(getUnavailableText(outcome));
+      return;
+    }
+
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
     if (nextAttempts >= MAX_ATTEMPTS) {
       // Nach 3 Fehlversuchen nicht in der Sackgasse stehen lassen
-      setMode('code');
-      setMessage(`${BIOMETRIC_NAME} hat ${MAX_ATTEMPTS} Mal nicht funktioniert. Entsperre Spendly mit deinem Code.`);
+      switchToCode(`${BIOMETRIC_NAME} hat ${MAX_ATTEMPTS} Mal nicht funktioniert. Entsperre Spendly mit deinem Code.`);
     } else {
       setMessage(`${BIOMETRIC_NAME} hat dich nicht erkannt.`);
     }
+  }
+
+  function switchToCode(text) {
+    setCode('');
+    setMessage(null);
+    setNotice(text);
+    setMode('code');
   }
 
   // --- Code -------------------------------------------------------------
@@ -219,6 +251,7 @@ export default function LockScreen({ navigation }) {
               setCode('');
               setFirstCode('');
               setMessage(null);
+              setNotice(null);
               setMode('setup');
             } catch (error) {
               console.warn('Daten konnten nicht gelöscht werden:', error);
@@ -252,15 +285,15 @@ export default function LockScreen({ navigation }) {
       {isCodeMode ? (
         <View style={styles.codeArea}>
           {/* Hinweis, wenn Face ID nicht zur Verfügung steht */}
-          {message !== null && (
+          {notice !== null && (
             <View style={styles.banner} accessibilityRole="alert">
               <View style={styles.bannerTop}>
                 <Icon name="info" size={18} color={colors.textSecondary} />
-                <Text style={styles.bannerText}>{message}</Text>
+                <Text style={styles.bannerText}>{notice}</Text>
               </View>
               {/* Ein Link in die Einstellungen hilft nur, wenn es dort
                   überhaupt etwas zu erlauben gibt */}
-              {biometry.reason === 'notEnrolled' || biometry.reason === 'error' ? (
+              {canFixInSettings(biometry.reason) ? (
                 <Pressable
                   onPress={() => Linking.openSettings()}
                   accessibilityRole="button"
@@ -275,10 +308,17 @@ export default function LockScreen({ navigation }) {
           <Text style={styles.codeTitle} accessibilityRole="header">
             {TEXTS[mode].title}
           </Text>
-          <Text style={styles.subtitle}>{TEXTS[mode].subtitle}</Text>
+          {/* Feste Höhe für zwei Zeilen: Die Tasten stehen bei jedem Schritt
+              an derselben Stelle (Muskelgedächtnis beim Code-Tippen) */}
+          <Text style={[styles.subtitle, styles.codeSubtitle]}>{TEXTS[mode].subtitle}</Text>
 
           <View style={styles.dots}>
             <CodeDots length={PIN_LENGTH} filled={code.length} hasError={message !== null} />
+          </View>
+
+          {/* Platz für den Fehler ist immer reserviert – auch hier springt nichts */}
+          <View style={styles.errorSlot}>
+            <FieldError message={message} align="center" />
           </View>
 
           <Keypad onDigit={handleDigit} onDelete={handleDelete} disabled={busy} />
@@ -294,6 +334,7 @@ export default function LockScreen({ navigation }) {
               onPress={() => {
                 setCode('');
                 setMessage(null);
+                setNotice(null);
                 setAttempts(0);
                 setMode('biometric');
               }}
@@ -352,10 +393,7 @@ export default function LockScreen({ navigation }) {
               title="Code verwenden"
               variant="text"
               size="medium"
-              onPress={() => {
-                setMessage(null);
-                setMode('code');
-              }}
+              onPress={() => switchToCode(null)}
             />
             <View style={styles.privacy}>
               <Icon name="lock" size={14} color={colors.textSecondary} />
@@ -473,9 +511,14 @@ function createStyles(colors) {
       color: colors.text,
       textAlign: 'center',
     },
+    codeSubtitle: { minHeight: 48 },
     dots: {
-      marginTop: spacing.lg,
-      marginBottom: spacing.xl,
+      marginTop: spacing.md,
+    },
+    errorSlot: {
+      minHeight: 56,
+      alignSelf: 'stretch',
+      justifyContent: 'center',
     },
     bottomAction: { marginTop: spacing.sm },
   });

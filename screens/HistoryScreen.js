@@ -17,7 +17,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import SwipeableRow from '../components/SwipeableRow';
 import { CATEGORIES } from '../utils/categories';
 import { filterExpenses, groupByDay } from '../utils/expenseList';
-import { formatCHF, formatMonthYear } from '../utils/format';
+import { formatCHF } from '../utils/format';
 import { useData } from '../storage/DataContext';
 
 export default function HistoryScreen({ navigation }) {
@@ -28,34 +28,29 @@ export default function HistoryScreen({ navigation }) {
   const [searchText, setSearchText] = useState('');
   const [categoryId, setCategoryId] = useState(null); // null = "Alle"
 
-  const { expenses, removeExpense, undoRemove, showSnackbar } = useData();
+  const { expenses, removeExpense } = useData();
   const filtered = filterExpenses(expenses, searchText, categoryId);
   const sections = groupByDay(filtered);
 
   // Unterscheidet "noch gar nichts erfasst" von "Filter liefert nichts"
   const hasExpenses = expenses.length > 0;
-  const hasFilter = searchText.trim() !== '' || categoryId !== null;
+  const trimmedSearch = searchText.trim();
+  const hasFilter = trimmedSearch !== '' || categoryId !== null;
+
+  // "40 Ausgaben" bzw. mit Filter "3 von 40 Ausgaben"
+  const countLabel = hasFilter
+    ? `${filtered.length} von ${expenses.length} Ausgaben`
+    : `${expenses.length} ${expenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}`;
 
   function resetFilter() {
     setSearchText('');
     setCategoryId(null);
   }
 
-  // Löschen mit Sicherheitsnetz: Die Ausgabe merken und über die
-  // Snackbar 5 Sekunden lang zurückholen können.
+  // Die Snackbar mit "Rückgängig" zeigt der DataContext an
   async function handleDelete(expense) {
     try {
-      await removeExpense(expense.id);
-      showSnackbar({
-        message: 'Ausgabe gelöscht',
-        actionLabel: 'Rückgängig',
-        onAction: () => {
-          undoRemove(expense).catch((error) => {
-            console.warn('Ausgabe konnte nicht wiederhergestellt werden:', error);
-            Alert.alert('Nicht wiederhergestellt', 'Die Ausgabe konnte nicht zurückgeholt werden.');
-          });
-        },
-      });
+      await removeExpense(expense);
     } catch (error) {
       console.warn('Ausgabe konnte nicht gelöscht werden:', error);
       Alert.alert('Nicht gelöscht', 'Die Ausgabe konnte nicht gelöscht werden.');
@@ -64,10 +59,7 @@ export default function HistoryScreen({ navigation }) {
 
   const header = (
     <View>
-      <ScreenHeader
-        title="Verlauf"
-        subtitle={`${formatMonthYear(new Date())} · ${filtered.length} Buchungen`}
-      />
+      <ScreenHeader title="Verlauf" subtitle={countLabel} />
 
       {/* Suchfeld */}
       <View style={styles.search}>
@@ -142,6 +134,9 @@ export default function HistoryScreen({ navigation }) {
                 isFirst={isFirst}
                 isLast={isLast}
                 onPress={() => navigation.navigate('NewExpense', { expenseId: item.id })}
+                // Wischen geht mit dem Screenreader nicht – darum "Löschen"
+                // zusätzlich als Aktion (VoiceOver: nach oben/unten wischen)
+                onDelete={() => handleDelete(item)}
               />
             </SwipeableRow>
           );
@@ -150,10 +145,14 @@ export default function HistoryScreen({ navigation }) {
           hasExpenses ? (
             <EmptyState
               icon="search"
-              title="Keine Treffer"
-              description="Zu dieser Suche gibt es keine Ausgaben."
-              actionLabel={hasFilter ? 'Filter zurücksetzen' : undefined}
-              onAction={hasFilter ? resetFilter : undefined}
+              title={
+                trimmedSearch
+                  ? `Keine Ausgaben für «${trimmedSearch}» gefunden`
+                  : 'Keine Ausgaben in dieser Kategorie'
+              }
+              description="Überprüfe deine Suchbegriffe oder setze die Filter zurück."
+              actionLabel="Filter zurücksetzen"
+              onAction={resetFilter}
             />
           ) : (
             <EmptyState

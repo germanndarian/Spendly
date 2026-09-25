@@ -21,6 +21,8 @@ import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
 import Button from '../components/Button';
 import Chip from '../components/Chip';
+import EmptyState from '../components/EmptyState';
+import FieldError from '../components/FieldError';
 import Icon from '../components/Icon';
 import Pill from '../components/Pill';
 import { CATEGORIES } from '../utils/categories';
@@ -32,8 +34,16 @@ import { useData } from '../storage/DataContext';
 export default function NewExpenseScreen({ navigation, route }) {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { expenses, settings, budgetRappen, spentRappen, createExpense, editExpense, showSnackbar } =
-    useData();
+  const {
+    expenses,
+    settings,
+    budgetRappen,
+    spentRappen,
+    createExpense,
+    editExpense,
+    removeExpense,
+    showSnackbar,
+  } = useData();
 
   // Mit expenseId wird eine bestehende Ausgabe bearbeitet
   const expenseId = route.params?.expenseId;
@@ -63,8 +73,8 @@ export default function NewExpenseScreen({ navigation, route }) {
   // Fehler erst zeigen, wenn im Feld schon etwas getippt wurde –
   // ein leeres Formular soll nicht sofort rot sein.
   const amountError = amountTouched ? errors.amount : null;
-  // Der Kategorie-Hinweis erscheint genau dann, wenn nur noch sie fehlt
-  const categoryError = !errors.amount && errors.category ? errors.category : null;
+  // Der Kategorie-Hinweis erscheint, sobald ein Betrag getippt wurde
+  const categoryError = amountTouched ? errors.category : null;
 
   // "Heute noch frei" – hilft beim Einordnen des Betrags
   const status = getBudgetStatus(budgetRappen, spentRappen, today);
@@ -82,6 +92,21 @@ export default function NewExpenseScreen({ navigation, route }) {
       return;
     }
     setDate(toISODate(selectedDate));
+  }
+
+  // Löschen direkt aus dem Bearbeiten heraus. Das ist auch der Weg für alle,
+  // die nicht wischen können. Die Snackbar erlaubt 5 s lang "Rückgängig".
+  async function handleDelete() {
+    const expense = existing;
+    // Zuerst schliessen, sonst zeigt das Modal kurz "nicht gefunden"
+    close();
+    try {
+      await removeExpense(expense);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.warn('Ausgabe konnte nicht gelöscht werden:', error);
+      Alert.alert('Nicht gelöscht', 'Die Ausgabe konnte nicht gelöscht werden.');
+    }
   }
 
   async function handleSave() {
@@ -117,6 +142,21 @@ export default function NewExpenseScreen({ navigation, route }) {
     }
   }
 
+  // Die Ausgabe gibt es nicht mehr (z. B. inzwischen gelöscht)
+  if (isEditMode && !existing) {
+    return (
+      <SafeAreaView style={[styles.screen, styles.notFound]}>
+        <EmptyState
+          icon="file-minus"
+          title="Ausgabe nicht gefunden"
+          description="Diese Ausgabe wurde inzwischen gelöscht."
+          actionLabel="Schliessen"
+          onAction={close}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -150,14 +190,14 @@ export default function NewExpenseScreen({ navigation, route }) {
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="decimal-pad"
                 autoFocus
-                style={styles.amountInput}
+                // Reicht bis CHF 9'999'999.99 – mehr passt nicht auf den Bildschirm
+                maxLength={10}
+                style={[styles.amountInput, amountError && styles.amountInputError]}
                 accessibilityLabel="Betrag in Franken"
               />
             </View>
             {amountError ? (
-              <Text style={styles.error} accessibilityRole="alert">
-                {amountError}
-              </Text>
+              <FieldError message={amountError} align="center" />
             ) : (
               <Pill
                 label={
@@ -170,8 +210,11 @@ export default function NewExpenseScreen({ navigation, route }) {
             )}
           </View>
 
-          {/* Kategorie */}
-          <Text style={styles.label}>Kategorie</Text>
+          {/* Kategorie – Fehler rechts neben dem Label wie im Mockup */}
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>Kategorie</Text>
+            <FieldError message={categoryError} style={styles.labelError} />
+          </View>
           <View style={styles.chips}>
             {CATEGORIES.map((category) => (
               <Chip
@@ -183,14 +226,9 @@ export default function NewExpenseScreen({ navigation, route }) {
               />
             ))}
           </View>
-          {categoryError ? (
-            <Text style={[styles.error, styles.errorUnderChips]} accessibilityRole="alert">
-              {categoryError}
-            </Text>
-          ) : null}
 
           {/* Beschreibung (optional) */}
-          <View style={styles.field}>
+          <View style={[styles.field, errors.description && styles.fieldError]}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>Beschreibung (optional)</Text>
               {description.length > 20 ? (
@@ -210,6 +248,7 @@ export default function NewExpenseScreen({ navigation, route }) {
               accessibilityLabel="Beschreibung, optional"
             />
           </View>
+          <FieldError message={errors.description} style={styles.errorUnderField} />
 
           {/* Datum – nie in der Zukunft */}
           <Pressable
@@ -217,7 +256,12 @@ export default function NewExpenseScreen({ navigation, route }) {
             accessibilityRole="button"
             accessibilityLabel={`Datum: ${formatLongDate(date, today)}`}
             accessibilityHint="Öffnet die Datumsauswahl"
-            style={({ pressed }) => [styles.field, styles.dateField, pressed && styles.fieldPressed]}
+            style={({ pressed }) => [
+              styles.field,
+              styles.dateField,
+              errors.date && styles.fieldError,
+              pressed && styles.fieldPressed,
+            ]}
           >
             <View>
               <Text style={styles.fieldLabel}>Datum</Text>
@@ -225,6 +269,7 @@ export default function NewExpenseScreen({ navigation, route }) {
             </View>
             <Icon name="calendar" size={20} color={colors.textSecondary} />
           </Pressable>
+          <FieldError message={errors.date} style={styles.errorUnderField} />
 
           {showDatePicker && (
             <View style={styles.pickerBox}>
@@ -248,6 +293,19 @@ export default function NewExpenseScreen({ navigation, route }) {
                 />
               )}
             </View>
+          )}
+
+          {/* Beim Bearbeiten: Löschen als eigene, rote Aktion ganz unten */}
+          {isEditMode && (
+            <Button
+              title="Ausgabe löschen"
+              variant="destructive"
+              size="medium"
+              icon="trash-2"
+              onPress={handleDelete}
+              accessibilityHint="Kann danach 5 Sekunden lang rückgängig gemacht werden"
+              style={styles.deleteButton}
+            />
           )}
         </ScrollView>
 
@@ -332,21 +390,27 @@ function createStyles(colors) {
       color: colors.text,
       minWidth: 120,
       padding: 0,
+      // Unsichtbare Linie, damit beim Fehler nichts verrutscht
+      borderBottomWidth: 1.5,
+      borderBottomColor: 'transparent',
     },
-    error: {
-      ...typography.labelMd,
-      color: colors.danger,
-      textAlign: 'center',
-    },
-    errorUnderChips: {
-      textAlign: 'left',
-      marginTop: -spacing.sm,
-      marginBottom: spacing.md,
+    // Rote Linie zusätzlich zur Meldung (nie Farbe allein)
+    amountInputError: { borderBottomColor: colors.danger },
+    labelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
     },
     label: {
       ...typography.labelMd,
       color: colors.textSecondary,
-      marginBottom: spacing.sm,
+    },
+    labelError: { flexShrink: 1 },
+    errorUnderField: {
+      marginTop: -spacing.sm,
+      marginBottom: spacing.md,
     },
     chips: {
       flexDirection: 'row',
@@ -366,6 +430,7 @@ function createStyles(colors) {
       marginBottom: spacing.md,
     },
     fieldPressed: { backgroundColor: colors.pressed },
+    fieldError: { borderColor: colors.danger, borderWidth: 1.5 },
     dateField: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -404,6 +469,8 @@ function createStyles(colors) {
       marginBottom: spacing.md,
       gap: spacing.sm,
     },
+    deleteButton: { marginTop: spacing.sm },
+    notFound: { justifyContent: 'center', paddingHorizontal: spacing.screen },
     footer: {
       paddingHorizontal: spacing.screen,
       paddingTop: spacing.sm,

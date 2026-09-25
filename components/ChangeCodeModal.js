@@ -1,4 +1,8 @@
-// Dialog zum Ändern des App-Codes: neuen Code eingeben und bestätigen.
+// Dialog zum Ändern des App-Codes in drei Schritten:
+// 1. 'current' – aktuellen Code eingeben (sonst könnte jede Person, die das
+//                entsperrte Handy in der Hand hat, den Code einfach ändern)
+// 2. 'new'     – neuen Code wählen
+// 3. 'confirm' – neuen Code zur Sicherheit wiederholen
 // Gespeichert wird nur der Hash (siehe storage/pin.js).
 import { useMemo, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
@@ -6,19 +10,28 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
-import { PIN_LENGTH, setPin } from '../storage/pin';
+import { PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
 import Button from './Button';
 import CodeDots from './CodeDots';
+import FieldError from './FieldError';
 import Keypad from './Keypad';
+
+// Titel und Beschreibung je Schritt
+const TEXTS = {
+  current: { title: 'Aktueller Code', description: 'Gib zuerst deinen jetzigen Code ein.' },
+  new: { title: 'Neuen Code wählen', description: `Wähle einen neuen ${PIN_LENGTH}-stelligen Code.` },
+  confirm: { title: 'Code bestätigen', description: 'Gib denselben Code nochmals ein.' },
+};
 
 export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [step, setStep] = useState('new'); // 'new' oder 'confirm'
+  const [step, setStep] = useState('current');
   const [firstCode, setFirstCode] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   // Beim Öffnen immer von vorne beginnen. React empfiehlt dafür das Anpassen
   // während des Renderns statt eines Effekts
@@ -27,43 +40,60 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   if (visible !== wasVisible) {
     setWasVisible(visible);
     if (visible) {
-      setStep('new');
+      setStep('current');
       setFirstCode('');
       setCode('');
       setError(null);
     }
   }
 
+  function fail(text, nextStep) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setCode('');
+    setError(text);
+    setStep(nextStep);
+  }
+
   async function handleComplete(enteredCode) {
-    if (step === 'new') {
-      setFirstCode(enteredCode);
-      setCode('');
-      setStep('confirm');
-      return;
-    }
-
-    if (enteredCode !== firstCode) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setStep('new');
-      setFirstCode('');
-      setCode('');
-      setError('Die beiden Codes stimmen nicht überein. Bitte nochmals von vorn.');
-      return;
-    }
-
+    setBusy(true);
     try {
+      if (step === 'current') {
+        if (await verifyPin(enteredCode)) {
+          setCode('');
+          setStep('new');
+        } else {
+          fail('Falscher Code. Versuche es nochmals.', 'current');
+        }
+        return;
+      }
+
+      if (step === 'new') {
+        setFirstCode(enteredCode);
+        setCode('');
+        setStep('confirm');
+        return;
+      }
+
+      // step === 'confirm'
+      if (enteredCode !== firstCode) {
+        setFirstCode('');
+        fail('Die beiden Codes stimmen nicht überein. Bitte nochmals von vorn.', 'new');
+        return;
+      }
+
       await setPin(enteredCode);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onDone();
     } catch (saveError) {
-      console.warn('Code konnte nicht gespeichert werden:', saveError);
-      setCode('');
-      setError('Der Code konnte nicht gespeichert werden. Versuche es nochmals.');
+      console.warn('Code konnte nicht geprüft oder gespeichert werden:', saveError);
+      fail('Das hat nicht geklappt. Versuche es nochmals.', step);
+    } finally {
+      setBusy(false);
     }
   }
 
   function handleDigit(digit) {
-    if (code.length >= PIN_LENGTH) return;
+    if (busy || code.length >= PIN_LENGTH) return;
     const next = code + digit;
     setCode(next);
     setError(null);
@@ -77,25 +107,25 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
       <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
         <View style={styles.card}>
           <Text style={styles.title} accessibilityRole="header">
-            {step === 'new' ? 'Neuen Code wählen' : 'Code bestätigen'}
+            {TEXTS[step].title}
           </Text>
-          <Text style={styles.description}>
-            {step === 'new'
-              ? `Wähle einen neuen ${PIN_LENGTH}-stelligen Code.`
-              : 'Gib denselben Code nochmals ein.'}
-          </Text>
+          <Text style={styles.description}>{TEXTS[step].description}</Text>
 
           <View style={styles.dots}>
             <CodeDots length={PIN_LENGTH} filled={code.length} hasError={Boolean(error)} />
           </View>
 
-          {error ? (
-            <Text style={styles.error} accessibilityRole="alert">
-              {error}
-            </Text>
-          ) : null}
+          {/* Platz für Fehler und Beschreibung ist immer reserviert, damit
+              die Tasten beim Tippen nicht springen */}
+          <View style={styles.errorSlot}>
+            <FieldError message={error} align="center" />
+          </View>
 
-          <Keypad onDigit={handleDigit} onDelete={() => setCode((current) => current.slice(0, -1))} />
+          <Keypad
+            onDigit={handleDigit}
+            onDelete={() => setCode((current) => current.slice(0, -1))}
+            disabled={busy}
+          />
 
           <Button title="Abbrechen" variant="secondary" size="medium" onPress={onCancel} style={styles.cancel} />
         </View>
@@ -132,16 +162,15 @@ function createStyles(colors) {
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: spacing.xs,
+      minHeight: 40, // zwei Zeilen
     },
     dots: {
-      marginTop: spacing.md,
-      marginBottom: spacing.md,
+      marginTop: spacing.sm,
     },
-    error: {
-      ...typography.labelMd,
-      color: colors.danger,
-      textAlign: 'center',
-      marginBottom: spacing.sm,
+    errorSlot: {
+      minHeight: 48,
+      alignSelf: 'stretch',
+      justifyContent: 'center',
     },
     cancel: {
       alignSelf: 'stretch',

@@ -11,7 +11,7 @@ import Icon from './Icon';
 
 const DURATION_MS = 5000;
 
-export default function Snackbar({ visible, message, actionLabel, onAction, onHide }) {
+export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -51,7 +51,7 @@ export default function Snackbar({ visible, message, actionLabel, onAction, onHi
       accessibilityLiveRegion="polite"
     >
       <View style={styles.bar}>
-        <Icon name="check-circle" size={20} color={colors.snackbarAction} />
+        <Icon name={icon} size={20} color={colors.snackbarAction} />
         <Text style={styles.message} numberOfLines={2}>
           {message}
         </Text>

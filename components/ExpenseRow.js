@@ -1,4 +1,5 @@
 // Eine Zeile in einer Ausgabenliste: Farbpunkt, Beschreibung, Kategorie, Betrag.
+// detail: optionaler Zusatz nach der Kategorie, z. B. "Heute" auf der Übersicht.
 // isFirst / isLast: Die Zeilen bilden zusammen eine Karte mit runden Ecken
 // (wichtig für die SectionList im Verlauf, wo jede Zeile einzeln gerendert wird).
 import { useMemo } from 'react';
@@ -9,21 +10,30 @@ import { radius, spacing } from '../theme/spacing';
 import { getCategory } from '../utils/categories';
 import { formatCHF } from '../utils/format';
 
-export default function ExpenseRow({ expense, subtitle, onPress, isFirst = true, isLast = true }) {
+export default function ExpenseRow({ expense, detail, onPress, onDelete, isFirst = true, isLast = true }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const category = getCategory(expense.category);
-  // Ohne Beschreibung zeigen wir den Kategorienamen als Titel
+  // Ohne Beschreibung zeigen wir den Kategorienamen als Titel –
+  // und dann nicht nochmals in der zweiten Zeile
   const title = expense.description || category.label;
+  const subtitle =
+    [expense.description ? category.label : null, detail].filter(Boolean).join(' · ') ||
+    'Ohne Beschreibung';
   const amount = formatCHF(expense.amountRappen);
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${subtitle ?? category.label}, ${amount}`}
+      accessibilityLabel={`${title}, ${subtitle}, ${amount}`}
       accessibilityHint="Öffnet die Ausgabe zum Bearbeiten"
+      // Mit onDelete bietet der Screenreader zusätzlich "Löschen" an
+      accessibilityActions={onDelete ? [{ name: 'delete', label: 'Löschen' }] : undefined}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'delete') onDelete?.();
+      }}
       style={({ pressed }) => [
         styles.row,
         isFirst && styles.first,
@@ -37,7 +47,7 @@ export default function ExpenseRow({ expense, subtitle, onPress, isFirst = true,
           {title}
         </Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {subtitle ?? category.label}
+          {subtitle}
         </Text>
       </View>
       <Text style={styles.amount}>{amount}</Text>

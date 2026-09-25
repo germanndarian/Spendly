@@ -62,7 +62,13 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
   return (
     <View style={styles.wrapper}>
       {/* Liegt hinter der Zeile und wird beim Wischen sichtbar */}
-      <View style={[styles.actionLayer, isFirst && styles.actionFirst, isLast && styles.actionLast]}>
+      <View
+        style={[styles.actionLayer, isFirst && styles.actionFirst, isLast && styles.actionLast]}
+        // Zugeklappt ist der Knopf unsichtbar – dann auch für den Screenreader
+        // (der löscht über die Aktion der Zeile, siehe ExpenseRow)
+        accessibilityElementsHidden={!isOpen}
+        importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}
+      >
         <Pressable
           onPress={handleDelete}
           accessibilityRole="button"
@@ -85,6 +91,8 @@ function createStyles(colors) {
   return StyleSheet.create({
     wrapper: {
       position: 'relative',
+      // Die Zeile verschwindet beim Wischen hinter dem Kartenrand
+      overflow: 'hidden',
     },
     actionLayer: {
       position: 'absolute',
