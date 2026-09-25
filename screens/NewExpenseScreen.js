@@ -160,18 +160,33 @@ export default function NewExpenseScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* Kopfzeile: Titel in der Mitte, Abbrechen links */}
+        {/* Kopfzeile in drei Spalten: Abbrechen | Titel | leer.
+            Die beiden Seiten sind gleich breit, dadurch steht der Titel in
+            der Mitte und bekommt nur den Platz dazwischen – er kann
+            "Abbrechen" also nie überdecken (auch nicht bei grosser Schrift). */}
         <View style={styles.topBar}>
-          <Text style={styles.title} accessibilityRole="header">
+          <View style={styles.topBarSide}>
+            <Pressable
+              onPress={close}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.cancel, pressed && styles.cancelPressed]}
+            >
+              <Text style={styles.cancelText} numberOfLines={1}>
+                Abbrechen
+              </Text>
+            </Pressable>
+          </View>
+          <Text
+            style={styles.title}
+            accessibilityRole="header"
+            numberOfLines={1}
+            // Wird es trotzdem eng, wird der Titel etwas kleiner statt abgeschnitten
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             {isEditMode ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}
           </Text>
-          <Pressable
-            onPress={close}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.cancel, pressed && styles.cancelPressed]}
-          >
-            <Text style={styles.cancelText}>Abbrechen</Text>
-          </Pressable>
+          <View style={styles.topBarSide} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -352,13 +367,16 @@ function createStyles(colors) {
       ...typography.bodyLg,
       color: colors.accent,
     },
-    // Titel liegt über der ganzen Breite, damit er genau in der Mitte steht
+    // Linke und rechte Spalte gleich breit (mindestens so breit wie "Abbrechen")
+    // minWidth statt width: Bei grosser Systemschrift darf "Abbrechen" wachsen
+    topBarSide: {
+      minWidth: 116,
+      alignItems: 'flex-start',
+    },
     title: {
       ...typography.headlineSm,
       color: colors.text,
-      position: 'absolute',
-      left: 0,
-      right: 0,
+      flex: 1,
       textAlign: 'center',
     },
     content: {
