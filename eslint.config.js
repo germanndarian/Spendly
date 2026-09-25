@@ -6,5 +6,12 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
-  }
+  },
+  // Unit-Tests: Jest stellt describe, test und expect global zur Verfügung
+  {
+    files: ["**/__tests__/**/*.js"],
+    languageOptions: {
+      globals: { describe: "readonly", test: "readonly", expect: "readonly" },
+    },
+  },
 ]);
