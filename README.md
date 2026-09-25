@@ -15,9 +15,10 @@ Alle Daten bleiben lokal auf dem Gerät. Es braucht weder ein Konto noch Interne
 | **Übersicht** | «Heute noch frei» (Tagesbudget), Fortschritt im Monat, Monatsstreifen mit einem Balken pro Tag, die letzten 3 Ausgaben. |
 | **Neue Ausgabe** (Modal) | Betrag, Kategorie, Beschreibung und Datum erfassen, mit Prüfung in Echtzeit. Dasselbe Formular dient zum Bearbeiten und Löschen. |
 | **Verlauf** | Alle Ausgaben nach Tag gruppiert, mit Suche und Kategorie-Filter. Nach links wischen löscht, «Rückgängig» holt die Ausgabe 5 Sekunden lang zurück. |
-| **Einstellungen** | Monatsbudget, Face ID an/aus, automatisch sperren, Code ändern, App sperren, Hell/Dunkel/System, alle Daten löschen. |
+| **Einstellungen** | Monatsbudget, Face ID an/aus, Sperrzeit (Sofort / 1 Minute / 5 Minuten / Nie), Code ändern, App sperren, Hell/Dunkel/System, alle Daten löschen. |
 
-**Special Feature:** Biometrie mit `expo-local-authentication`. Nach einer Minute im Hintergrund sperrt sich die App automatisch wieder.
+**Special Feature:** Biometrie mit `expo-local-authentication`. Nach der eingestellten Sperrzeit im Hintergrund
+(Standard: 1 Minute) sperrt sich die App automatisch wieder.
 
 ## Technik
 
@@ -82,7 +83,7 @@ Die Screens greifen nie direkt auf die Datenbank zu, sondern nur über `useData(
 | Daten | Speicherort | Warum |
 | --- | --- | --- |
 | Ausgaben (`id`, `amount_rappen`, `category`, `description`, `date`, `created_at`) | SQLite, Tabelle `expenses` (Index auf `date`) | Kern der App |
-| Monatsbudget, Face ID an/aus, automatisch sperren, Erscheinungsbild, zuletzt gewählte Kategorie, «Hinweis gesehen» | SQLite, Tabelle `settings` (Schlüssel/Wert) | Man soll nicht bei jedem Start neu einstellen müssen |
+| Monatsbudget, Face ID an/aus, Sperrzeit, Erscheinungsbild, zuletzt gewählte Kategorie, «Hinweis gesehen» | SQLite, Tabelle `settings` (Schlüssel/Wert) | Man soll nicht bei jedem Start neu einstellen müssen |
 | App-Code | expo-secure-store (`spendly_pin_hash`) | Nur als gesalzener SHA-256-Hash, nie im Klartext |
 
 - **Beträge in Rappen:** Alle Beträge sind ganze Zahlen (CHF 12.50 = 1250). So entstehen keine Rundungsfehler wie bei `0.1 + 0.2`.

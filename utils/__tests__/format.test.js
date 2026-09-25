@@ -9,6 +9,7 @@ import {
   formatMonthName,
   formatMonthYear,
   formatShortDate,
+  formatTime,
   parseAmountToRappen,
   parseISODate,
   toISODate,
@@ -98,6 +99,11 @@ describe('Datum', () => {
 
   test('formatDayLabel funktioniert über den Monatswechsel', () => {
     expect(formatDayLabel('2026-09-30', new Date(2026, 9, 1))).toBe('Gestern');
+  });
+
+  test('formatTime mit führender Null im 24-Stunden-Format', () => {
+    expect(formatTime(new Date(2026, 8, 23, 7, 5))).toBe('07:05');
+    expect(formatTime(new Date(2026, 8, 23, 20, 15))).toBe('20:15');
   });
 
   test('formatLongDate für das Datumsfeld im Formular', () => {

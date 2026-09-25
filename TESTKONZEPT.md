@@ -23,9 +23,10 @@ Die reinen Funktionen in `utils/` werden mit jest-expo getestet (`npm test`).
 | U01 | `format.test.js` | Schweizer Betragsformat `CHF 1'240.50`, Eingabe mit Komma und Punkt, Rappen ohne Rundungsfehler, Datumstexte («Heute», «Gestern», «Montag, 21. Sept.») | OK |
 | U02 | `budget.test.js` | «Heute noch frei» wie im Mockup (CHF 24.50), Abrunden, Budget überschritten, «Auf Kurs», Schaltjahr, Budget 0 | OK |
 | U03 | `validation.test.js` | Betrag (Pflicht, > 0, max. 2 Nachkommastellen), Kategorie, Beschreibung max. 40 Zeichen, Datum nicht in der Zukunft, Monatsbudget | OK |
-| U04 | `expenseList.test.js` | Sortierung, Suche in Beschreibung und Kategorie, Kategorie-Filter, Gruppierung nach Tag mit Tagessumme | OK |
+| U04 | `expenseList.test.js` | Sortierung, Suche in Beschreibung und Kategorie, Kategorie-Filter, Gruppierung nach Tag mit Tagessumme, Uhrzeit nur bei am selben Tag erfassten Ausgaben | OK |
+| U05 | `autoLock.test.js` | Sperrzeit: «Sofort», «Nach 1 Minute» (59 s ok, 60 s sperrt), «Nach 5 Minuten», «Nie» | OK |
 
-Stand 25.09.2026: 4 Testdateien, 53 Tests, alle bestanden.
+Stand 25.09.2026: 5 Testdateien, 65 Tests, alle bestanden.
 
 ## Manuelle Tests
 
@@ -39,7 +40,8 @@ Stand 25.09.2026: 4 Testdateien, 53 Tests, alle bestanden.
 | T04 | App in Expo Go auf dem iPhone öffnen | Kein Absturz. Hinweis «Face ID ist in Expo Go nicht erlaubt …» und direkt die Code-Eingabe | OK |
 | T05 | Android / Development Build: «Mit Fingerabdruck/Face ID entsperren» antippen und erfolgreich scannen | Übersicht erscheint | Offen |
 | T06 | Android / Development Build: Biometrie 3-mal fehlschlagen lassen | Nach Fehlversuch 1 und 2 «Erneut versuchen», nach dem 3. automatisch Code-Eingabe mit Hinweis | Offen |
-| T07 | Entsperrte App länger als 60 Sekunden in den Hintergrund legen, dann wieder öffnen | App ist gesperrt, Code-Eingabe erscheint (getestet mit 66 s) | OK |
+| T07 | Sperrzeit «Nach 1 Minute»: entsperrte App länger als 60 Sekunden in den Hintergrund legen, dann wieder öffnen | App ist gesperrt, Code-Eingabe erscheint (getestet mit 66 s) | OK |
+| T07b | Einstellungen → «Automatisch sperren» → «Sofort», App 3 Sekunden in den Hintergrund legen | Beim Zurückkommen gesperrt. Auswahl ist gespeichert und in der Zeile sichtbar («Sofort») | OK |
 | T08 | Einstellungen → «App jetzt sperren» | Sofort Code-Eingabe, kein Weg zurück ohne Code | OK |
 | T09 | Einstellungen → «Code ändern», falschen aktuellen Code eingeben | Meldung «Falscher Code», Schritt bleibt «Aktueller Code» | OK |
 | T10 | Einstellungen → «Code ändern», richtigen aktuellen Code eingeben | Weiter zu «Neuen Code wählen» | OK |
@@ -63,10 +65,12 @@ Stand 25.09.2026: 4 Testdateien, 53 Tests, alle bestanden.
 | ID | Schritt | Erwartet | Ergebnis |
 | --- | --- | --- | --- |
 | T20 | Übersicht ohne Ausgaben | Karte «Noch keine Ausgaben im September» mit Tipp «Tippe auf +», nicht vom «+»-Button verdeckt | OK |
+| T20b | Übersicht und Verlauf mit heute erfassten Ausgaben | Zweite Zeile mit Uhrzeit: Übersicht «Essen & Trinken · Heute, 09:52», Verlauf «Essen & Trinken · 09:52» | OK |
+| T20c | Übersicht, Budget CHF 2'000.00, ausgegeben CHF 1'489.90 | Karte «Sparziel September – Du hast diesen Monat CHF 510.10 Reserve.» Bei überschrittenem Budget ist die Karte ausgeblendet | OK |
 | T21 | Übersicht mit Demo-Daten (CHF 560.70 von 800.00, 25. Sept.) | «Heute noch frei» CHF 39.88 (= 239.30 / 6 Tage), 70 %, rote Punkte über Tagen über dem Tagesbudget | OK |
 | T22 | Ausgabe über CHF 300 erfassen, sodass das Budget überschritten ist | «Budget überschritten um CHF 60.70» rot mit Warn-Icon, Balken rot, 108 % | OK |
 | T23 | Übersicht → «Alle anzeigen» | Wechsel in den Tab «Verlauf» | OK |
-| T24 | Verlauf: nach «Zalando» suchen | «Keine Ausgaben für «Zalando» gefunden» mit Button «Filter zurücksetzen», Untertitel «0 von 33 Ausgaben» | OK |
+| T24 | Verlauf: nach «Zalando» suchen | «Keine Ausgaben für «Zalando» gefunden» mit Button «Filter zurücksetzen», Untertitel «0 Treffer» | OK |
 | T25 | «Filter zurücksetzen» antippen | Suche leer, alle Ausgaben sichtbar | OK |
 
 ### Einstellungen und Darstellung

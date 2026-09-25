@@ -15,6 +15,7 @@ export const lightColors = {
   accentSoft: '#E3EEE8', // heller Grünton für Badges und gewählte Chips
   onAccent: '#FFFFFF', // Text auf grünem Hintergrund
   danger: '#B4432D', // nur für Budget überschritten, Fehler, Löschen
+  onDanger: '#FFFFFF', // Text auf roter Fläche (z. B. "Löschen" beim Wischen)
   dangerSoft: '#F7E6E1', // heller Hintergrund hinter Fehler-Icons
   pressed: '#EFEDE7', // gedrückter Zustand von hellen Flächen
   subtle: '#EFEEE9', // Pills, Icon-Kreise, Fortschritts-Hintergrund
@@ -41,6 +42,8 @@ export const darkColors = {
   accentSoft: '#1E3A2F',
   onAccent: '#FFFFFF',
   danger: '#E0775F',
+  // Auf dem hellen Rot wäre Weiss zu schwach (3:1) – darum dunkle Schrift
+  onDanger: '#15171A',
   dangerSoft: '#3A221C',
   pressed: '#242825',
   subtle: '#262A27',

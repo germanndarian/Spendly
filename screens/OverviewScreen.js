@@ -17,7 +17,7 @@ import Pill from '../components/Pill';
 import ProgressBar from '../components/ProgressBar';
 import ScreenHeader from '../components/ScreenHeader';
 import { getBudgetStatus } from '../utils/budget';
-import { sortNewestFirst } from '../utils/expenseList';
+import { getExpenseTime, sortNewestFirst } from '../utils/expenseList';
 import { formatCHF, formatDayLabel, formatMonthName, formatMonthYear } from '../utils/format';
 import { useData } from '../storage/DataContext';
 
@@ -132,27 +132,42 @@ export default function OverviewScreen({ navigation }) {
                 <ExpenseRow
                   key={expense.id}
                   expense={expense}
-                  detail={formatDayLabel(expense.date, today)}
+                  detail={getRecentDetail(expense, today)}
                   isFirst={index === 0}
                   isLast={index === recentExpenses.length - 1}
                   onPress={() => navigation.navigate('NewExpense', { expenseId: expense.id })}
                 />
               ))}
             </View>
+
+            {/* Reserve im Monat (Mockup "Sparziel") – nur solange das Budget reicht */}
+            {!status.isOverBudget && (
+              <Card style={[styles.infoCard, styles.savingsCard]}>
+                <View style={[styles.infoIcon, styles.savingsIcon]}>
+                  <Icon family="mci" name="piggy-bank-outline" size={22} color={colors.accent} />
+                </View>
+                <View style={styles.infoTexts}>
+                  <Text style={styles.infoTitle}>Sparziel {formatMonthName(today)}</Text>
+                  <Text style={styles.infoText}>
+                    Du hast diesen Monat {formatCHF(status.remainingRappen)} Reserve.
+                  </Text>
+                </View>
+              </Card>
+            )}
           </>
         ) : (
           // Leerzustand als kompakte Karte: So bleibt er über dem "+"-Button
           // und wird von ihm nicht verdeckt
-          <Card style={styles.emptyCard}>
-            <View style={styles.emptyIcon}>
+          <Card style={styles.infoCard}>
+            <View style={styles.infoIcon}>
               <Icon name="file-text" size={22} color={colors.textSecondary} />
             </View>
-            <View style={styles.emptyTexts}>
-              <Text style={styles.emptyTitle} accessibilityRole="header">
+            <View style={styles.infoTexts}>
+              <Text style={styles.infoTitle} accessibilityRole="header">
                 Noch keine Ausgaben im {formatMonthName(today)}
               </Text>
               {showHint ? (
-                <Text style={styles.emptyText}>Tippe auf +, um deine erste Ausgabe zu erfassen.</Text>
+                <Text style={styles.infoText}>Tippe auf +, um deine erste Ausgabe zu erfassen.</Text>
               ) : null}
             </View>
           </Card>
@@ -162,6 +177,14 @@ export default function OverviewScreen({ navigation }) {
       <Fab onPress={() => navigation.navigate('NewExpense')} />
     </SafeAreaView>
   );
+}
+
+// Zweite Zeile in "Letzte Ausgaben": "Heute, 12:14" bzw. "Gestern"
+// (Uhrzeit nur für heute, wie im Mockup)
+function getRecentDetail(expense, today) {
+  const day = formatDayLabel(expense.date, today);
+  const time = getExpenseTime(expense);
+  return day === 'Heute' && time ? `${day}, ${time}` : day;
 }
 
 function createStyles(colors) {
@@ -247,12 +270,13 @@ function createStyles(colors) {
       borderRadius: 8,
     },
     linkPressed: { backgroundColor: colors.pressed },
-    emptyCard: {
+    // Karte mit Icon links und Text rechts (Leerzustand und Sparziel)
+    infoCard: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
     },
-    emptyIcon: {
+    infoIcon: {
       width: 48,
       height: 48,
       borderRadius: 24,
@@ -260,15 +284,17 @@ function createStyles(colors) {
       justifyContent: 'center',
       backgroundColor: colors.subtle,
     },
-    emptyTexts: {
+    infoTexts: {
       flex: 1,
       gap: 2,
     },
-    emptyTitle: {
+    savingsCard: { marginTop: spacing.lg },
+    savingsIcon: { backgroundColor: colors.accentSoft },
+    infoTitle: {
       ...typography.headlineSm,
       color: colors.text,
     },
-    emptyText: {
+    infoText: {
       ...typography.bodyMd,
       color: colors.textSecondary,
     },

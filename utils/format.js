@@ -68,6 +68,13 @@ export function formatShortDate(date) {
   return `${date.getDate()}. ${MONTHS_SHORT[date.getMonth()]}`;
 }
 
+// Date -> "07:32" (24-Stunden-Format)
+export function formatTime(date) {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 // Anzahl Tage zwischen zwei Daten (nur das Datum zählt, nicht die Uhrzeit)
 function daysBetween(from, to) {
   const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());

@@ -447,7 +447,8 @@ function createStyles(colors) {
     },
     counter: {
       ...typography.labelSm,
-      color: colors.textTertiary,
+      // textSecondary statt textTertiary: sonst unter 4.5:1 Kontrast
+      color: colors.textSecondary,
       fontVariant: ['tabular-nums'],
     },
     fieldInput: {

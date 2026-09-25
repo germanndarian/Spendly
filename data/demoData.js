@@ -52,8 +52,12 @@ export function createDemoExpenses(today = new Date()) {
         category,
         description,
         date: toISODate(day),
-        // Uhrzeit nur, damit mehrere Ausgaben am gleichen Tag eine Reihenfolge haben
-        createdAt: new Date(day.getFullYear(), day.getMonth(), day.getDate(), 9 + i * 5).getTime(),
+        // Erfassungszeit (für Reihenfolge und Uhrzeit in der Liste),
+        // bei heute höchstens "jetzt"
+        createdAt: Math.min(
+          new Date(day.getFullYear(), day.getMonth(), day.getDate(), 8 + i * 5, (index * 17) % 60).getTime(),
+          today.getTime()
+        ),
       });
       index++;
     }

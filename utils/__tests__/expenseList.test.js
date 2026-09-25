@@ -1,6 +1,6 @@
 // Unit-Tests für utils/expenseList.js und utils/categories.js
 import { CATEGORIES, getCategory } from '../categories';
-import { filterExpenses, groupByDay, sortNewestFirst } from '../expenseList';
+import { filterExpenses, getExpenseTime, groupByDay, sortNewestFirst } from '../expenseList';
 
 const TODAY = new Date(2026, 8, 23);
 
@@ -38,6 +38,23 @@ describe('sortNewestFirst', () => {
     const before = ids(EXPENSES);
     sortNewestFirst(EXPENSES);
     expect(ids(EXPENSES)).toEqual(before);
+  });
+});
+
+describe('getExpenseTime', () => {
+  test('zeigt die Uhrzeit, wenn am selben Tag erfasst', () => {
+    const createdAt = new Date(2026, 8, 23, 12, 14).getTime();
+    expect(getExpenseTime({ date: '2026-09-23', createdAt })).toBe('12:14');
+  });
+
+  test('keine Uhrzeit bei nachgetragenen Ausgaben', () => {
+    // Am 23. erfasst, aber für den 20. eingetragen
+    const createdAt = new Date(2026, 8, 23, 12, 14).getTime();
+    expect(getExpenseTime({ date: '2026-09-20', createdAt })).toBeNull();
+  });
+
+  test('keine Uhrzeit ohne Erfassungszeitpunkt', () => {
+    expect(getExpenseTime({ date: '2026-09-23' })).toBeNull();
   });
 });
 

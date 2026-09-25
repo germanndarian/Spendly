@@ -7,7 +7,7 @@ import { getDatabase } from './db';
 export const DEFAULT_SETTINGS = {
   budgetRappen: 80000, // CHF 800.00
   biometricEnabled: true, // Face ID / Fingerabdruck verwenden
-  autoLockEnabled: true, // nach 1 Minute im Hintergrund sperren
+  autoLockMinutes: 1, // Sperrzeit im Hintergrund in Minuten, null = nie
   appearance: 'system', // 'light' | 'dark' | 'system'
   lastCategory: null, // zuletzt gewählte Kategorie (Vorauswahl)
   hintSeen: false, // Tipp im Leerzustand schon gesehen?
@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS = {
 const PARSERS = {
   budgetRappen: (value) => Number(value),
   biometricEnabled: (value) => value === 'true',
-  autoLockEnabled: (value) => value === 'true',
+  autoLockMinutes: (value) => (value === '' ? null : Number(value)),
   appearance: (value) => value,
   lastCategory: (value) => (value === '' ? null : value),
   hintSeen: (value) => value === 'true',

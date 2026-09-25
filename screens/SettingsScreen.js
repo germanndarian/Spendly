@@ -8,6 +8,7 @@ import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import ChangeCodeModal from '../components/ChangeCodeModal';
 import Chip from '../components/Chip';
+import ChoiceModal from '../components/ChoiceModal';
 import PromptModal from '../components/PromptModal';
 import ScreenHeader from '../components/ScreenHeader';
 import SettingsRow from '../components/SettingsRow';
@@ -17,6 +18,7 @@ import { useData } from '../storage/DataContext';
 import { createDemoExpenses } from '../data/demoData';
 import { formatCHF, parseAmountToRappen } from '../utils/format';
 import { validateBudget } from '../utils/validation';
+import { AUTO_LOCK_OPTIONS, getAutoLockLabel } from '../utils/autoLock';
 import { BIOMETRIC_NAME, checkBiometrics, getUnavailableText, UNLOCK_LABEL } from '../utils/biometrics';
 
 // Auswahl für das Erscheinungsbild
@@ -34,6 +36,7 @@ export default function SettingsScreen() {
 
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [codeModalVisible, setCodeModalVisible] = useState(false);
+  const [lockModalVisible, setLockModalVisible] = useState(false);
   // Steht Face ID / Fingerabdruck auf diesem Gerät zur Verfügung?
   const [biometry, setBiometry] = useState({ available: true, reason: null });
 
@@ -125,12 +128,12 @@ export default function SettingsScreen() {
             onSwitchChange={(value) => changeSetting('biometricEnabled', value)}
             disabled={!biometry.available}
           />
+          {/* Sperrzeit wählbar statt nur an/aus (Konzept: Individualisierbarkeit) */}
           <SettingsRow
             icon="clock"
             label="Automatisch sperren"
-            hint="Nach 1 Minute im Hintergrund"
-            switchValue={settings.autoLockEnabled}
-            onSwitchChange={(value) => changeSetting('autoLockEnabled', value)}
+            value={getAutoLockLabel(settings.autoLockMinutes)}
+            onPress={() => setLockModalVisible(true)}
           />
           <SettingsRow icon="hash" label="Code ändern" onPress={() => setCodeModalVisible(true)} />
           <SettingsRow
@@ -188,6 +191,19 @@ export default function SettingsScreen() {
         validate={validateBudget}
         onCancel={() => setBudgetModalVisible(false)}
         onSave={handleSaveBudget}
+      />
+
+      <ChoiceModal
+        visible={lockModalVisible}
+        title="Automatisch sperren"
+        description="Wie lange darf Spendly im Hintergrund sein, bevor es sich sperrt?"
+        options={AUTO_LOCK_OPTIONS.map((option) => ({ key: option.minutes, label: option.label }))}
+        selectedKey={settings.autoLockMinutes}
+        onSelect={(minutes) => {
+          changeSetting('autoLockMinutes', minutes);
+          setLockModalVisible(false);
+        }}
+        onCancel={() => setLockModalVisible(false)}
       />
 
       <ChangeCodeModal

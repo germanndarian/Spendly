@@ -16,7 +16,7 @@ import Icon from '../components/Icon';
 import ScreenHeader from '../components/ScreenHeader';
 import SwipeableRow from '../components/SwipeableRow';
 import { CATEGORIES } from '../utils/categories';
-import { filterExpenses, groupByDay } from '../utils/expenseList';
+import { filterExpenses, getExpenseTime, groupByDay } from '../utils/expenseList';
 import { formatCHF } from '../utils/format';
 import { useData } from '../storage/DataContext';
 
@@ -37,10 +37,10 @@ export default function HistoryScreen({ navigation }) {
   const trimmedSearch = searchText.trim();
   const hasFilter = trimmedSearch !== '' || categoryId !== null;
 
-  // "40 Ausgaben" bzw. mit Filter "3 von 40 Ausgaben"
+  // Wie im Mockup: "32 Buchungen" bzw. mit Suche/Filter "3 Treffer"
   const countLabel = hasFilter
-    ? `${filtered.length} von ${expenses.length} Ausgaben`
-    : `${expenses.length} ${expenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}`;
+    ? `${filtered.length} Treffer`
+    : `${expenses.length} ${expenses.length === 1 ? 'Buchung' : 'Buchungen'}`;
 
   function resetFilter() {
     setSearchText('');
@@ -131,6 +131,8 @@ export default function HistoryScreen({ navigation }) {
             <SwipeableRow isFirst={isFirst} isLast={isLast} onDelete={() => handleDelete(item)}>
               <ExpenseRow
                 expense={item}
+                // Der Tag steht schon in der Überschrift, darum nur die Uhrzeit
+                detail={getExpenseTime(item)}
                 isFirst={isFirst}
                 isLast={isLast}
                 onPress={() => navigation.navigate('NewExpense', { expenseId: item.id })}

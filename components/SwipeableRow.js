@@ -75,7 +75,7 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
           accessibilityLabel="Ausgabe löschen"
           style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
         >
-          <Icon name="trash-2" size={20} color={colors.onAccent} />
+          <Icon name="trash-2" size={20} color={colors.onDanger} />
           <Text style={styles.actionText}>Löschen</Text>
         </Pressable>
       </View>
@@ -116,7 +116,7 @@ function createStyles(colors) {
     actionPressed: { opacity: 0.8 },
     actionText: {
       ...typography.labelSm,
-      color: colors.onAccent,
+      color: colors.onDanger,
     },
   });
 }
