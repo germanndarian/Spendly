@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="Farbpalette von Spendly">
+<rect x="1" y="1" width="1278" height="398" rx="28" fill="#F6F5F1" stroke="#E7E5DF" stroke-width="2"/>
+<text x="56" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="1.6" fill="#6E6D68">MARKE</text>
+<rect x="56.0" y="74" width="220.8" height="64" rx="14" fill="#F6F5F1" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="56.0" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Hintergrund</text>
+<text x="56.0" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#F6F5F1</text>
+<rect x="292.8" y="74" width="220.8" height="64" rx="14" fill="#FFFFFF" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="292.8" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Karte</text>
+<text x="292.8" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#FFFFFF</text>
+<rect x="529.6" y="74" width="220.8" height="64" rx="14" fill="#15171A" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="529.6" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Tinte</text>
+<text x="529.6" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#15171A</text>
+<rect x="766.4" y="74" width="220.8" height="64" rx="14" fill="#1F5A45" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="766.4" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Waldgrün</text>
+<text x="766.4" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#1F5A45</text>
+<rect x="1003.2" y="74" width="220.8" height="64" rx="14" fill="#B4432D" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="1003.2" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Warnrot</text>
+<text x="1003.2" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#B4432D</text>
+<text x="56" y="228" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="1.6" fill="#6E6D68">KATEGORIEN</text>
+<rect x="56.0" y="246" width="181.3" height="64" rx="14" fill="#8FA68E" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="56.0" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Essen &amp; Trinken</text>
+<text x="56.0" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#8FA68E</text>
+<rect x="253.3" y="246" width="181.3" height="64" rx="14" fill="#7C8B9C" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="253.3" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Mobilität</text>
+<text x="253.3" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#7C8B9C</text>
+<rect x="450.7" y="246" width="181.3" height="64" rx="14" fill="#B98468" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="450.7" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Freizeit</text>
+<text x="450.7" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#B98468</text>
+<rect x="648.0" y="246" width="181.3" height="64" rx="14" fill="#C8B38A" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="648.0" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Shopping</text>
+<text x="648.0" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#C8B38A</text>
+<rect x="845.3" y="246" width="181.3" height="64" rx="14" fill="#8E8299" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="845.3" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Abos</text>
+<text x="845.3" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#8E8299</text>
+<rect x="1042.7" y="246" width="181.3" height="64" rx="14" fill="#A5A29A" stroke="#E7E5DF" stroke-width="1.5"/>
+<text x="1042.7" y="336" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#15171A">Sonstiges</text>
+<text x="1042.7" y="358" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#6E6D68">#A5A29A</text>
+</svg>

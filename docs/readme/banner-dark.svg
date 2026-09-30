@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" role="img" aria-label="Spendly – Wie viel darf ich heute noch ausgeben?">
+<rect x="1" y="1" width="1278" height="518" rx="28" fill="#121413" stroke="#2C302D" stroke-width="2"/>
+<rect x="76" y="86" width="336" height="38" rx="19" fill="#262A27"/>
+<circle cx="98" cy="105" r="5" fill="#7CC4A4"/>
+<text x="112" y="110.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#A6A59F">Modul 335 · React Native · Expo SDK 57</text>
+<text x="72" y="236" font-family="'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif" font-size="118" letter-spacing="-3" fill="#EDECE7">Spendly<tspan fill="#7CC4A4">.</tspan></text>
+<text x="76" y="298" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="600" letter-spacing="-0.4" fill="#EDECE7">Wie viel darf ich heute noch ausgeben?</text>
+<text x="76" y="338" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" fill="#A6A59F">Ausgaben in Sekunden erfassen – lokal, privat, mit Face ID.</text>
+<rect x="76" y="384" width="172" height="42" rx="21" fill="#1B1E1C" stroke="#2C302D" stroke-width="1.5"/>
+<circle cx="98" cy="405" r="5.5" fill="#8FA68E"/>
+<text x="112" y="410.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#EDECE7">Essen &amp; Trinken</text>
+<rect x="258" y="384" width="122" height="42" rx="21" fill="#1B1E1C" stroke="#2C302D" stroke-width="1.5"/>
+<circle cx="280" cy="405" r="5.5" fill="#7C8B9C"/>
+<text x="294" y="410.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#EDECE7">Mobilität</text>
+<rect x="390" y="384" width="112" height="42" rx="21" fill="#1B1E1C" stroke="#2C302D" stroke-width="1.5"/>
+<circle cx="412" cy="405" r="5.5" fill="#B98468"/>
+<text x="426" y="410.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#EDECE7">Freizeit</text>
+<rect x="512" y="384" width="120" height="42" rx="21" fill="#1B1E1C" stroke="#2C302D" stroke-width="1.5"/>
+<circle cx="534" cy="405" r="5.5" fill="#C8B38A"/>
+<text x="548" y="410.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#EDECE7">Shopping</text>
+<rect x="736" y="60" width="472" height="404" rx="24" fill="#1B1E1C" stroke="#2C302D" stroke-width="1.5"/>
+<text x="770" y="116" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="1.6" fill="#A6A59F">HEUTE NOCH FREI</text>
+<rect x="1078" y="94" width="96" height="32" rx="16" fill="#1E3A2F"/>
+<text x="1126" y="115" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#7CC4A4">Auf Kurs</text>
+<text x="768" y="198" font-family="'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif" font-size="70" letter-spacing="-1.5" fill="#EDECE7">CHF 24.50</text>
+<text x="770" y="236" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" fill="#A6A59F">Tagesbudget für die restlichen 8 Tage</text>
+<text x="770" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#EDECE7">CHF 604.00 von CHF 800.00 ausgegeben</text>
+<text x="1174" y="282" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#A6A59F">76%</text>
+<rect x="770" y="296" width="404" height="8" rx="4" fill="#262A27"/>
+<rect x="770" y="296" width="307.0" height="8" rx="4" fill="#7CC4A4"/>
+<rect x="770.0" y="376" width="9.6" height="34" rx="2.5" fill="#8C8B85"/>
+<rect x="783.6" y="370" width="9.6" height="40" rx="2.5" fill="#8C8B85"/>
+<rect x="797.2" y="380" width="9.6" height="30" rx="2.5" fill="#8C8B85"/>
+<rect x="810.8" y="346" width="9.6" height="64" rx="2.5" fill="#8C8B85"/>
+<circle cx="815.6" cy="337" r="3.5" fill="#E0775F"/>
+<rect x="824.4" y="372" width="9.6" height="38" rx="2.5" fill="#8C8B85"/>
+<rect x="838.0" y="386" width="9.6" height="24" rx="2.5" fill="#8C8B85"/>
+<rect x="851.6" y="366" width="9.6" height="44" rx="2.5" fill="#8C8B85"/>
+<rect x="865.2" y="372" width="9.6" height="38" rx="2.5" fill="#8C8B85"/>
+<rect x="878.8" y="374" width="9.6" height="36" rx="2.5" fill="#8C8B85"/>
+<rect x="892.4" y="362" width="9.6" height="48" rx="2.5" fill="#8C8B85"/>
+<rect x="906.0" y="370" width="9.6" height="40" rx="2.5" fill="#8C8B85"/>
+<rect x="919.6" y="340" width="9.6" height="70" rx="2.5" fill="#8C8B85"/>
+<circle cx="924.4" cy="331" r="3.5" fill="#E0775F"/>
+<rect x="933.2" y="384" width="9.6" height="26" rx="2.5" fill="#8C8B85"/>
+<rect x="946.8" y="376" width="9.6" height="34" rx="2.5" fill="#8C8B85"/>
+<rect x="960.4" y="360" width="9.6" height="50" rx="2.5" fill="#8C8B85"/>
+<rect x="974.0" y="380" width="9.6" height="30" rx="2.5" fill="#8C8B85"/>
+<rect x="987.6" y="366" width="9.6" height="44" rx="2.5" fill="#8C8B85"/>
+<rect x="1001.2" y="374" width="9.6" height="36" rx="2.5" fill="#8C8B85"/>
+<rect x="1014.8" y="382" width="9.6" height="28" rx="2.5" fill="#8C8B85"/>
+<rect x="1028.4" y="368" width="9.6" height="42" rx="2.5" fill="#8C8B85"/>
+<rect x="1042.0" y="372" width="9.6" height="38" rx="2.5" fill="#8C8B85"/>
+<rect x="1055.6" y="366" width="9.6" height="44" rx="2.5" fill="#8C8B85"/>
+<rect x="1069.2" y="374" width="9.6" height="36" rx="2.5" fill="#7CC4A4"/>
+<circle cx="1074.0" cy="365" r="3.5" fill="#7CC4A4"/>
+<rect x="1082.8" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1096.4" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1110.0" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1123.6" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1137.2" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1150.8" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<rect x="1164.4" y="404" width="9.6" height="6" rx="2.5" fill="#262A27"/>
+<text x="770" y="438" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#75746F">1. Sept</text>
+<text x="1074.0" y="438" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#7CC4A4">Heute</text>
+<text x="1174" y="438" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#75746F">30. Sept</text>
+</svg>
