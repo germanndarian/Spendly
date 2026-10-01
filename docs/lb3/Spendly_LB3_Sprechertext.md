@@ -51,14 +51,14 @@ Alex: Hinter dem kurzen Ablauf steckt eine getrennte Struktur. Das Formular prü
 
 Alex: Wir können den Kern heute zeigen. Einundneunzig automatisierte Tests in neun Suiten bestehen. Sie prüfen Berechnungen, Eingaben, PIN-Sperren und die Speicherung. Die SQLite-Regressionen führen echtes SQL aus. ESLint meldet keine Fehler. Zusätzlich haben wir den vollständigen Ablauf im eigenen iOS-Release-Build geprüft: erfassen, korrigieren, löschen, zurückholen und nach einem vollständigen Neustart wiederfinden. Dabei war der Entwicklungsserver gestoppt. Auch alte Monatsbudgets und Dark Mode wurden geprüft. Das ist technischer Nachweis. Ob Lernende Spendly täglich nutzen und die Tagesorientierung verstehen, müssen wir als Nächstes mit ihnen testen. Ein erfolgreicher Simulator-Dialog ersetzt auch keinen echten Gesichtsscan.
 
-## 9. Der nächste Beweis: Alltag · 0:55
+## 9. Rückblick und Ausblick · 0:55
 
-Darian: Der nächste Schritt wäre eine kleine Alltagsprobe: fünf Lernende oder Studierende nutzen Spendly eine Woche. Das ist unser Vorschlag, kein bereits durchgeführter Pilot. Wir würden beobachten, wie schnell eine Erfassung gelingt, ob die Tagesorientierung verständlich ist und ob die Personen freiwillig wiederkommen. Erst danach lässt sich entscheiden, welche Erweiterung hilfreich ist und ob ein Geschäftsmodell Sinn ergibt. Vor einem Launch gehören auch der echte iPhone-Test, Android und Screenreader dazu. Aus der Entwicklung nehmen wir mit, Fehlerfälle früher zu planen. Ein altes Monatsbudget darf sich beim Ändern des neuen Monats nicht verschieben. Ein Neustart darf keine Sperrfrist zurücksetzen. Diese Erfahrungen würden wir im nächsten Durchgang schon beim Entwurf berücksichtigen.
+Darian: Unser Rückblick ist konkret: Ein Monatsbudget braucht eine feste Zuordnung zum Monat. Sonst verändert ein neuer Wert auch die Vergangenheit. Auch die Rückgängig-Frist und die PIN-Sperre müssen einen Neustart überstehen. Das waren Herausforderungen, für die wir dauerhafte Zustände speichern mussten. Beim nächsten Projekt würden wir solche Fehlerfälle früher im Entwurf planen. Im Ausblick könnten wir Spendly um einen CSV-Export für Ausgaben oder Statistiken nach Kategorien erweitern. Diese Funktionen sind Ideen für spätere Versionen und noch nicht umgesetzt. Zuerst würden wir mit Lernenden prüfen, ob sie die Tagesorientierung verstehen und welche Erweiterung ihnen hilft. Die offenen Geräte- und Barrierefreiheitstests bleiben ebenfalls wichtig.
 
-## 10. Die nächste kleine Ausgabe · 0:45
+## 10. Spendly ausprobieren · 0:45
 
-Darian: Am Anfang haben wir gefragt, wie ihr entscheidet, was ihr euch heute noch leisten könnt. Spendly macht einen Teil dieser Entscheidung sichtbar: eure erfassten Ausgaben und das restliche Monatsbudget. Wir haben eine funktionierende App gebaut, den Entwurf weiterentwickelt und die wichtigsten Abläufe geprüft. Jetzt interessiert uns euer Blick als mögliche Nutzerinnen und Nutzer. Welche Ausgabe würdet ihr zuerst erfassen? Und was müsste Spendly können, damit ihr es auch nächste Woche noch öffnet?
+Darian: Am Anfang haben wir gefragt, wie ihr entscheidet, was ihr euch heute noch leisten könnt. Spendly macht eure erfassten Ausgaben und das restliche Monatsbudget sichtbar. Wir haben aus dem Entwurf eine funktionierende App gemacht und die wichtigsten Abläufe geprüft. Jetzt seid ihr dran: Wollt ihr Spendly ausprobieren? Welche Funktion würdet ihr euch für euren Alltag wünschen? Eure Ideen würden uns helfen, die nächste Version gezielt zu verbessern.
 
-[Eine kurze Antwort aufnehmen und in die Fragerunde überleiten.]
+[Die Einladung kurz wirken lassen und in die Fragerunde überleiten.]
 
 Vielen Dank. Wir beantworten gerne eure Fragen zur Idee, zur App und zur technischen Umsetzung.
