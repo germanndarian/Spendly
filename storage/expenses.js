@@ -5,6 +5,7 @@ import { getDatabase } from './db';
 
 // Die Spalten der Tabelle – einmal hier, damit SELECT und INSERT zusammenpassen
 const COLUMNS = 'id, amount_rappen, category, description, date, created_at';
+export const UNDO_DURATION_MS = 5000;
 
 // Datenbankzeile (snake_case) -> Objekt, wie es die App verwendet (camelCase)
 function toExpense(row) {
@@ -24,7 +25,7 @@ export async function listExpenses() {
   // getAllAsync liefert alle passenden Zeilen als Liste.
   // ORDER BY sortiert: neuestes Datum zuerst, am gleichen Tag die neueste Erfassung zuerst.
   const rows = await db.getAllAsync(
-    `SELECT ${COLUMNS} FROM expenses ORDER BY date DESC, created_at DESC`
+    `SELECT ${COLUMNS} FROM expenses WHERE pending_delete_until IS NULL ORDER BY date DESC, created_at DESC`
   );
   // Jede Datenbank-Zeile in ein Ausgaben-Objekt für die App umwandeln
   return rows.map(toExpense);
@@ -35,7 +36,7 @@ export async function getExpense(id) {
   const db = await getDatabase();
   // Das ? ist ein Platzhalter. SQLite setzt die id sicher ein – so kann
   // niemand über eine Eingabe eigene SQL-Befehle einschleusen (SQL-Injection).
-  const row = await db.getFirstAsync(`SELECT ${COLUMNS} FROM expenses WHERE id = ?`, id);
+  const row = await db.getFirstAsync(`SELECT ${COLUMNS} FROM expenses WHERE id = ? AND pending_delete_until IS NULL`, id);
   return row ? toExpense(row) : null;
 }
 
@@ -51,32 +52,62 @@ export async function addExpense({ amountRappen, category, description, date }) 
     // Jetzt, als Millisekunden seit 1970
     createdAt: Date.now(),
   };
-  await insert(expense);
+  const db = await getDatabase();
+  await db.withExclusiveTransactionAsync(async (transaction) => {
+    await insert(expense, transaction);
+    await rememberCategory(transaction, category);
+  });
   return expense;
 }
 
 // Bestehende Ausgabe ändern. Das Erfassungsdatum (created_at) bleibt gleich.
 export async function updateExpense(id, { amountRappen, category, description, date }) {
   const db = await getDatabase();
-  await db.runAsync(
-    // Die ? werden der Reihe nach durch die Werte darunter ersetzt
-    'UPDATE expenses SET amount_rappen = ?, category = ?, description = ?, date = ? WHERE id = ?',
-    amountRappen,
-    category,
-    description ?? '',
-    date,
-    id
-  );
+  await db.withExclusiveTransactionAsync(async (transaction) => {
+    const result = await transaction.runAsync(
+      // Die ? werden der Reihe nach durch die Werte darunter ersetzt
+      'UPDATE expenses SET amount_rappen = ?, category = ?, description = ?, date = ? WHERE id = ? AND pending_delete_until IS NULL',
+      amountRappen,
+      category,
+      description ?? '',
+      date,
+      id
+    );
+    if (result.changes === 0) throw new Error('Ausgabe wurde inzwischen gelöscht.');
+    await rememberCategory(transaction, category);
+  });
 }
 
 export async function deleteExpense(id) {
   const db = await getDatabase();
-  await db.runAsync('DELETE FROM expenses WHERE id = ?', id);
+  const deadline = Date.now() + UNDO_DURATION_MS;
+  await db.runAsync('UPDATE expenses SET pending_delete_until = ? WHERE id = ? AND pending_delete_until IS NULL', deadline, id);
+  return deadline;
 }
 
-// Für "Rückgängig" nach dem Löschen: die Ausgabe mit gleicher id zurückschreiben.
+// Die Zeile bleibt fünf Sekunden gespeichert. Auch ein App-Neustart verliert
+// weder die Ausgabe noch ihre Löschfrist; ein abgelaufenes Undo ist unmöglich.
 export async function restoreExpense(expense) {
-  await insert(expense);
+  const db = await getDatabase();
+  const result = await db.runAsync(
+    'UPDATE expenses SET pending_delete_until = NULL WHERE id = ? AND pending_delete_until > ?',
+    expense.id, Date.now()
+  );
+  return result.changes > 0;
+}
+
+export async function finishPendingDeletes() {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM expenses WHERE pending_delete_until <= ?', Date.now());
+}
+
+export async function getPendingDelete() {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync(
+    `SELECT ${COLUMNS}, pending_delete_until FROM expenses WHERE pending_delete_until > ? ORDER BY pending_delete_until DESC LIMIT 1`,
+    Date.now()
+  );
+  return row ? { ...toExpense(row), deadline: row.pending_delete_until } : null;
 }
 
 export async function deleteAllExpenses() {
@@ -88,9 +119,9 @@ export async function deleteAllExpenses() {
 // schneller als 40 einzelne INSERTs.
 export async function addManyExpenses(expenses) {
   const db = await getDatabase();
-  await db.withTransactionAsync(async () => {
+  await db.withExclusiveTransactionAsync(async (transaction) => {
     for (const expense of expenses) {
-      await insert(expense);
+      await insert(expense, transaction);
     }
   });
 }
@@ -101,7 +132,7 @@ export async function getMonthTotalRappen(monthPrefix) {
   const row = await db.getFirstAsync(
     // SUM zählt alle Beträge zusammen. COALESCE macht aus «keine Ausgaben» (NULL)
     // eine 0. LIKE '2026-09-%' findet alle Tage im September.
-    'SELECT COALESCE(SUM(amount_rappen), 0) AS total FROM expenses WHERE date LIKE ?',
+    'SELECT COALESCE(SUM(amount_rappen), 0) AS total FROM expenses WHERE date LIKE ? AND pending_delete_until IS NULL',
     `${monthPrefix}-%`
   );
   return row?.total ?? 0;
@@ -113,7 +144,7 @@ export async function getDailyTotalsRappen(monthPrefix, daysInMonth) {
   const db = await getDatabase();
   const rows = await db.getAllAsync(
     // GROUP BY date: eine Summe pro Tag statt einer für den ganzen Monat
-    'SELECT date, SUM(amount_rappen) AS total FROM expenses WHERE date LIKE ? GROUP BY date',
+    'SELECT date, SUM(amount_rappen) AS total FROM expenses WHERE date LIKE ? AND pending_delete_until IS NULL GROUP BY date',
     `${monthPrefix}-%`
   );
 
@@ -130,8 +161,8 @@ export async function getDailyTotalsRappen(monthPrefix, daysInMonth) {
 }
 
 // Gemeinsames INSERT für neue, wiederhergestellte und Demo-Ausgaben.
-async function insert(expense) {
-  const db = await getDatabase();
+async function insert(expense, connection) {
+  const db = connection ?? await getDatabase();
   await db.runAsync(
     // Sechs Platzhalter für die sechs Spalten
     `INSERT INTO expenses (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -141,5 +172,14 @@ async function insert(expense) {
     expense.description ?? '',
     expense.date,
     expense.createdAt
+  );
+}
+
+// Kategorie und Ausgabe gehören zu einer Aktion. Ein Fehler darf keine
+// halb gespeicherte Ausgabe hinterlassen, die beim Wiederholen doppelt entsteht.
+async function rememberCategory(transaction, category) {
+  await transaction.runAsync(
+    "INSERT INTO settings (key, value) VALUES ('lastCategory', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    category
   );
 }

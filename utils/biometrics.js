@@ -7,58 +7,62 @@ import * as LocalAuthentication from 'expo-local-authentication';
 
 const IS_ANDROID = Platform.OS === 'android';
 
-// Android spricht von Fingerabdruck, iOS von Face ID
-export const BIOMETRIC_NAME = IS_ANDROID ? 'Fingerabdruck' : 'Face ID';
-export const UNLOCK_LABEL = IS_ANDROID ? 'Mit Fingerabdruck entsperren' : 'Mit Face ID entsperren';
-export const BIOMETRIC_ICON = IS_ANDROID ? 'fingerprint' : 'face-recognition';
+// Der Sensor bestimmt den Namen: Ein iPhone mit Touch ID ist kein Face-ID-Gerät.
+export function getBiometricPresentation(types = []) {
+  const face = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
+  const finger = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT);
+  const name = face && finger ? 'Biometrie' : face ? (IS_ANDROID ? 'Gesichtserkennung' : 'Face ID') : finger ? (IS_ANDROID ? 'Fingerabdruck' : 'Touch ID') : 'Biometrie';
+  return { name, unlockLabel: `Mit ${name} entsperren`, icon: finger && !face ? 'fingerprint' : 'face-recognition' };
+}
 
 // Laut Expo-Dokumentation funktioniert Face ID auf iOS nicht in Expo Go.
 // appOwnership ist genau dann 'expo', wenn die App in Expo Go läuft.
 // Darum zeigen wir dort direkt die Code-Eingabe statt eines Buttons,
 // der sowieso nicht funktionieren würde.
 const IS_EXPO_GO = Constants.appOwnership === 'expo';
-const BLOCKED_IN_EXPO_GO = IS_EXPO_GO && Platform.OS === 'ios';
 
 // Prüft der Reihe nach: Sensor vorhanden? Biometrie eingerichtet?
 // Gibt { available, reason } zurück und wirft nie einen Fehler.
 export async function checkBiometrics() {
-  if (BLOCKED_IN_EXPO_GO) {
-    return { available: false, reason: 'expoGo' };
-  }
+  let presentation = getBiometricPresentation();
   try {
+    const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+    presentation = getBiometricPresentation(types);
+    if (IS_EXPO_GO && !IS_ANDROID && types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+      return { ...presentation, available: false, reason: 'expoGo' };
+    }
     if (!(await LocalAuthentication.hasHardwareAsync())) {
       // Achtung: iOS meldet "kein Sensor" auch dann, wenn Face ID für Spendly
       // verboten wurde. Welche Art von Sensor das Gerät hat, weiss es aber
       // trotzdem – so können wir die beiden Fälle unterscheiden.
-      const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-      return { available: false, reason: types.length > 0 ? 'notAllowed' : 'noHardware' };
+      return { ...presentation, available: false, reason: types.length > 0 ? 'notAllowed' : 'noHardware' };
     }
     // Sensor ist da – aber ist auch ein Gesicht bzw. Finger gespeichert?
     if (!(await LocalAuthentication.isEnrolledAsync())) {
-      return { available: false, reason: 'notEnrolled' };
+      return { ...presentation, available: false, reason: 'notEnrolled' };
     }
-    return { available: true, reason: null };
+    return { ...presentation, available: true, reason: null };
   } catch {
-    return { available: false, reason: 'error' };
+    return { ...presentation, available: false, reason: 'error' };
   }
 }
 
 // Passender Hinweis, wenn Biometrie nicht zur Verfügung steht.
-export function getUnavailableText(reason) {
+export function getUnavailableText(reason, name = 'Biometrie') {
   // switch wählt je nach Grund den passenden Text aus
   switch (reason) {
     case 'expoGo':
-      return `${BIOMETRIC_NAME} ist in Expo Go nicht erlaubt. Entsperre Spendly mit deinem Code.`;
+      return `${name} ist in Expo Go nicht erlaubt. Entsperre Spendly mit deinem Code.`;
     case 'notAllowed':
-      return `${BIOMETRIC_NAME} ist für Spendly nicht erlaubt. Entsperre Spendly mit deinem Code.`;
+      return `${name} ist für Spendly nicht erlaubt. Entsperre Spendly mit deinem Code.`;
     case 'notEnrolled':
-      return `${BIOMETRIC_NAME} ist auf diesem Gerät nicht eingerichtet. Entsperre Spendly mit deinem Code.`;
+      return `${name} ist auf diesem Gerät nicht eingerichtet. Entsperre Spendly mit deinem Code.`;
     case 'noHardware':
-      return `Dieses Gerät unterstützt ${BIOMETRIC_NAME} nicht. Entsperre Spendly mit deinem Code.`;
+      return `Dieses Gerät unterstützt ${name} nicht. Entsperre Spendly mit deinem Code.`;
     case 'lockout':
-      return `${BIOMETRIC_NAME} ist nach zu vielen Versuchen vorübergehend gesperrt. Entsperre Spendly mit deinem Code.`;
+      return `${name} ist nach zu vielen Versuchen vorübergehend gesperrt. Entsperre Spendly mit deinem Code.`;
     default:
-      return `${BIOMETRIC_NAME} steht gerade nicht zur Verfügung. Entsperre Spendly mit deinem Code.`;
+      return `${name} steht gerade nicht zur Verfügung. Entsperre Spendly mit deinem Code.`;
   }
 }
 
@@ -97,7 +101,7 @@ export function classifyAuthError(error) {
 export async function authenticate() {
   try {
     return await LocalAuthentication.authenticateAsync({
-      promptMessage: UNLOCK_LABEL,
+      promptMessage: 'Spendly entsperren',
       cancelLabel: 'Abbrechen',
       fallbackLabel: 'Code verwenden',
       // Wir haben einen eigenen Code, deshalb nicht den Geräte-Code anbieten

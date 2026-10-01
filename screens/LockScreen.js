@@ -20,16 +20,14 @@ import Keypad from '../components/Keypad';
 import Pill from '../components/Pill';
 import Wordmark from '../components/Wordmark';
 import { useData } from '../storage/DataContext';
-import { hasPin, PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
+import { getPinStatus, hasPin, PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
+import usePinLockout from '../utils/usePinLockout';
 import {
   authenticate,
-  BIOMETRIC_ICON,
-  BIOMETRIC_NAME,
   canFixInSettings,
   checkBiometrics,
   classifyAuthError,
   getUnavailableText,
-  UNLOCK_LABEL,
 } from '../utils/biometrics';
 
 const MAX_ATTEMPTS = 3; // danach geht es nur noch über den Code
@@ -53,6 +51,9 @@ export default function LockScreen({ navigation }) {
   const [mode, setMode] = useState('checking');
   // Steht Face ID zur Verfügung – und falls nicht, warum?
   const [biometry, setBiometry] = useState({ available: false, reason: null });
+  const biometricName = biometry.name ?? 'Biometrie';
+  const biometricIcon = biometry.icon ?? 'face-recognition';
+  const unlockLabel = biometry.unlockLabel ?? 'Mit Biometrie entsperren';
   // Die bisher getippten Ziffern, z. B. '123'
   const [code, setCode] = useState('');
   const [firstCode, setFirstCode] = useState(''); // beim Festlegen: erste Eingabe
@@ -65,6 +66,8 @@ export default function LockScreen({ navigation }) {
   const [attempts, setAttempts] = useState(0);
   // true, solange gerade geprüft wird – dann sind die Tasten gesperrt
   const [busy, setBusy] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState(0);
+  const lockSeconds = usePinLockout(lockedUntil);
   // Pulsieren des Symbols, solange der Scan läuft (Feedback laut Ergonomie-Checkliste)
   const [pulse] = useState(() => new Animated.Value(0));
 
@@ -97,6 +100,8 @@ export default function LockScreen({ navigation }) {
       try {
         // Beides gleichzeitig prüfen: Gibt es einen Code? Geht Face ID?
         [codeExists, biometryState] = await Promise.all([hasPin(), checkBiometrics()]);
+        const pinStatus = await getPinStatus();
+        if (active) setLockedUntil(pinStatus.lockedUntil);
       } catch (error) {
         // Lieber die Code-Eingabe zeigen als im Ladezustand stehen bleiben
         console.warn('Sperre konnte nicht geprüft werden:', error);
@@ -121,7 +126,7 @@ export default function LockScreen({ navigation }) {
         // Hinweis nur, wenn Biometrie nicht geht – nicht, wenn sie
         // in den Einstellungen bewusst ausgeschaltet wurde
         if (!biometryState.available) {
-          setNotice(getUnavailableText(biometryState.reason));
+          setNotice(getUnavailableText(biometryState.reason, biometryState.name));
         }
       }
     }
@@ -167,8 +172,8 @@ export default function LockScreen({ navigation }) {
     // Biometrie geht gerade gar nicht (z. B. Berechtigung in den iOS-
     // Einstellungen entzogen): direkt zur Code-Eingabe mit Hinweis
     if (outcome !== 'failed') {
-      setBiometry({ available: false, reason: outcome });
-      switchToCode(getUnavailableText(outcome));
+      setBiometry((current) => ({ ...current, available: false, reason: outcome }));
+      switchToCode(getUnavailableText(outcome, biometricName));
       return;
     }
 
@@ -179,9 +184,9 @@ export default function LockScreen({ navigation }) {
 
     if (nextAttempts >= MAX_ATTEMPTS) {
       // Nach 3 Fehlversuchen nicht in der Sackgasse stehen lassen
-      switchToCode(`${BIOMETRIC_NAME} hat ${MAX_ATTEMPTS} Mal nicht funktioniert. Entsperre Spendly mit deinem Code.`);
+      switchToCode(`${biometricName} hat ${MAX_ATTEMPTS} Mal nicht funktioniert. Entsperre Spendly mit deinem Code.`);
     } else {
-      setMessage(`${BIOMETRIC_NAME} hat dich nicht erkannt.`);
+      setMessage(`${biometricName} hat dich nicht erkannt.`);
     }
   }
 
@@ -197,7 +202,7 @@ export default function LockScreen({ navigation }) {
   // Wird bei jedem Tipp auf eine Zahl aufgerufen
   function handleDigit(digit) {
     // Während der Prüfung oder wenn schon 6 Ziffern da sind: nichts tun
-    if (busy || code.length >= PIN_LENGTH) return;
+    if (busy || (mode === 'code' && lockSeconds > 0) || code.length >= PIN_LENGTH) return;
 
     const next = code + digit;
     setCode(next);
@@ -244,7 +249,9 @@ export default function LockScreen({ navigation }) {
 
       // mode === 'code'
       // Eingabe mit dem gespeicherten Hash vergleichen (siehe storage/pin.js)
-      if (await verifyPin(enteredCode)) {
+      const result = await verifyPin(enteredCode);
+      setLockedUntil(result.lockedUntil);
+      if (result.valid) {
         unlock();
       } else {
         failCode('Falscher Code. Versuche es nochmals.');
@@ -265,8 +272,34 @@ export default function LockScreen({ navigation }) {
     setMessage(text);
   }
 
-  // "Code vergessen?" – ohne Konto gibt es nur den Weg über das Löschen.
-  function handleForgotCode() {
+  // Ein neuer Code ist nur nach erfolgreicher Biometrie oder vollständigem
+  // Daten-Reset möglich. Eine abgebrochene Prüfung gibt nichts frei.
+  async function handleForgotCode() {
+    if (busy) return;
+    setBusy(true);
+    // Eine bewusst ausgeschaltete Biometrie gilt auch bei der Wiederherstellung.
+    const available = settings.biometricEnabled ? await checkBiometrics() : { available: false };
+    setBusy(false);
+    if (available.available) {
+      Alert.alert('Code zurücksetzen?', 'Bestätige deine Identität mit Biometrie. Deine Ausgaben bleiben erhalten.', [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Identität bestätigen', onPress: async () => {
+          setBusy(true);
+          const result = await authenticate();
+          setBusy(false);
+          if (!result.success) {
+            setMessage('Identität nicht bestätigt. Dein Code bleibt unverändert.');
+            return;
+          }
+          setCode('');
+          setFirstCode('');
+          setMessage(null);
+          setNotice('Identität bestätigt. Wähle jetzt einen neuen Code.');
+          setMode('setup');
+        } },
+      ]);
+      return;
+    }
     Alert.alert(
       'Code vergessen?',
       'Der Code lässt sich nicht wiederherstellen. Du kannst nur alle Daten löschen und neu starten.',
@@ -355,19 +388,19 @@ export default function LockScreen({ navigation }) {
 
           {/* Platz für den Fehler ist immer reserviert – auch hier springt nichts */}
           <View style={styles.errorSlot}>
-            <FieldError message={message} align="center" />
+            <FieldError message={mode === 'code' && lockSeconds > 0 ? `Zu viele Versuche. Noch ${lockSeconds} Sekunden warten.` : message} align="center" />
           </View>
 
           {/* Eigener Zahlenblock mit grossen Tasten (72 × 72 pt) */}
-          <Keypad onDigit={handleDigit} onDelete={handleDelete} disabled={busy} />
+          <Keypad onDigit={handleDigit} onDelete={handleDelete} disabled={busy || (mode === 'code' && lockSeconds > 0)} />
 
           {/* Zurück zu Face ID, falls es zur Verfügung steht */}
           {mode === 'code' && biometry.available && settings.biometricEnabled && (
             <Button
-              title={UNLOCK_LABEL}
+              title={unlockLabel}
               variant="text"
               size="medium"
-              icon={BIOMETRIC_ICON}
+              icon={biometricIcon}
               iconFamily="mci"
               onPress={() => {
                 setCode('');
@@ -387,6 +420,7 @@ export default function LockScreen({ navigation }) {
               variant="text"
               size="medium"
               onPress={handleForgotCode}
+              disabled={busy}
               style={styles.bottomAction}
             />
           )}
@@ -405,7 +439,7 @@ export default function LockScreen({ navigation }) {
             >
               <Icon
                 family="mci"
-                name={BIOMETRIC_ICON}
+                name={biometricIcon}
                 size={44}
                 color={hasFailed ? colors.danger : colors.accent}
               />
@@ -423,8 +457,8 @@ export default function LockScreen({ navigation }) {
           {/* Unten in der Daumenzone: Aktionen */}
           <View style={styles.actions}>
             <Button
-              title={hasFailed ? 'Erneut versuchen' : UNLOCK_LABEL}
-              icon={hasFailed ? 'refresh-cw' : BIOMETRIC_ICON}
+              title={hasFailed ? 'Erneut versuchen' : unlockLabel}
+              icon={hasFailed ? 'refresh-cw' : biometricIcon}
               iconFamily={hasFailed ? undefined : 'mci'}
               onPress={runBiometric}
               disabled={busy}

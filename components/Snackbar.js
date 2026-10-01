@@ -11,7 +11,7 @@ import Icon from './Icon';
 
 const DURATION_MS = 5000;
 
-export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide }) {
+export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide, expiresAt }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
@@ -32,9 +32,9 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
     }).start();
 
     // Nach 5 Sekunden automatisch schliessen
-    const timer = setTimeout(onHide, DURATION_MS);
+    const timer = setTimeout(onHide, expiresAt ? Math.max(0, expiresAt - Date.now()) : DURATION_MS);
     return () => clearTimeout(timer);
-  }, [visible, message, slide, onHide]);
+  }, [visible, message, slide, onHide, expiresAt]);
 
   // Nichts anzeigen, wenn gerade keine Meldung da ist
   if (!visible) return null;

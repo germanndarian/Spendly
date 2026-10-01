@@ -1,7 +1,8 @@
 // Screen 3 · Neue Ausgabe (Modal) – wird auch zum Bearbeiten verwendet.
 // Die Eingaben werden in Echtzeit geprüft (utils/validation.js).
 // "Speichern" bleibt gesperrt, solange etwas fehlt oder falsch ist.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePreventRemove } from '@react-navigation/native';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -74,6 +75,32 @@ export default function NewExpenseScreen({ navigation, route }) {
   const [amountTouched, setAmountTouched] = useState(false);
   // true, während gespeichert wird – verhindert doppeltes Speichern
   const [saving, setSaving] = useState(false);
+  const [allowExit, setAllowExit] = useState(false);
+  const [initial] = useState(() => ({
+    amountText: existing ? (existing.amountRappen / 100).toFixed(2) : '',
+    categoryId: existing ? existing.category : settings.lastCategory,
+    description: existing ? existing.description : '',
+    date: existing ? existing.date : toISODate(today),
+  }));
+  const dirty = amountText !== initial.amountText || categoryId !== initial.categoryId || description !== initial.description || date !== initial.date;
+
+  // Gilt auch für Android-Zurück und die Wischgeste des nativen Modals.
+  // Die Sicherheitssperre darf dabei nie durch ein Formular blockiert werden.
+  usePreventRemove((dirty || saving) && !allowExit, ({ data }) => {
+    if (data.action.type === 'RESET' && data.action.payload?.routes?.[0]?.name === 'Lock') {
+      navigation.dispatch(data.action);
+      return;
+    }
+    if (saving) return;
+    Alert.alert('Änderungen verwerfen?', 'Deine Eingaben sind noch nicht gespeichert.', [
+      { text: 'Weiter bearbeiten', style: 'cancel' },
+      { text: 'Verwerfen', style: 'destructive', onPress: () => navigation.dispatch(data.action) },
+    ]);
+  });
+
+  useEffect(() => {
+    if (allowExit) navigation.goBack();
+  }, [allowExit, navigation]);
 
   // Bei jedem Neuzeichnen (also bei jedem Tastendruck) das ganze Formular prüfen.
   // errors enthält pro Feld einen Fehlertext oder null.
@@ -111,15 +138,18 @@ export default function NewExpenseScreen({ navigation, route }) {
   // Löschen direkt aus dem Bearbeiten heraus. Das ist auch der Weg für alle,
   // die nicht wischen können. Die Snackbar erlaubt 5 s lang "Rückgängig".
   async function handleDelete() {
+    if (saving) return;
     const expense = existing;
-    // Zuerst schliessen, sonst zeigt das Modal kurz "nicht gefunden"
-    close();
+    setSaving(true);
     try {
       await removeExpense(expense);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setAllowExit(true);
     } catch (error) {
       console.warn('Ausgabe konnte nicht gelöscht werden:', error);
       Alert.alert('Nicht gelöscht', 'Die Ausgabe konnte nicht gelöscht werden.');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -148,7 +178,7 @@ export default function NewExpenseScreen({ navigation, route }) {
       // Kurze Rückmeldung, dass es geklappt hat
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showSnackbar({ message: 'Gespeichert' });
-      close();
+      setAllowExit(true);
     } catch (error) {
       console.warn('Ausgabe konnte nicht gespeichert werden:', error);
       Alert.alert(
@@ -161,7 +191,7 @@ export default function NewExpenseScreen({ navigation, route }) {
   }
 
   // Die Ausgabe gibt es nicht mehr (z. B. inzwischen gelöscht)
-  if (isEditMode && !existing) {
+  if (isEditMode && !existing && !saving && !allowExit) {
     return (
       <SafeAreaView style={[styles.screen, styles.notFound]}>
         <EmptyState
@@ -187,7 +217,8 @@ export default function NewExpenseScreen({ navigation, route }) {
         <View style={styles.topBar}>
           <View style={styles.topBarSide}>
             <Pressable
-              onPress={close}
+                  onPress={close}
+                  disabled={saving}
               accessibilityRole="button"
               style={({ pressed }) => [styles.cancel, pressed && styles.cancelPressed]}
             >
@@ -241,11 +272,11 @@ export default function NewExpenseScreen({ navigation, route }) {
             ) : (
               <Pill
                 label={
-                  status.isOverBudget
+                  budgetRappen == null ? 'Noch kein Monatsbudget festgelegt' : status.isOverBudget
                     ? `Budget überschritten um ${formatCHF(status.overByRappen)}`
                     : `Heute noch frei: ${formatCHF(status.dailyAllowanceRappen)}`
                 }
-                tone={status.isOverBudget ? 'danger' : 'accent'}
+                tone={budgetRappen != null && status.isOverBudget ? 'danger' : 'accent'}
               />
             )}
           </View>
@@ -348,6 +379,7 @@ export default function NewExpenseScreen({ navigation, route }) {
               size="medium"
               icon="trash-2"
               onPress={handleDelete}
+              disabled={saving}
               accessibilityHint="Kann danach 5 Sekunden lang rückgängig gemacht werden"
               style={styles.deleteButton}
             />

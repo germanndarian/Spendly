@@ -4,13 +4,14 @@
 // 2. 'new'     – neuen Code wählen
 // 3. 'confirm' – neuen Code zur Sicherheit wiederholen
 // Gespeichert wird nur der Hash (siehe storage/pin.js).
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
-import { PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
+import { getPinStatus, PIN_LENGTH, setPin, verifyPin } from '../storage/pin';
+import usePinLockout from '../utils/usePinLockout';
 import Button from './Button';
 import CodeDots from './CodeDots';
 import FieldError from './FieldError';
@@ -33,6 +34,11 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   const [code, setCode] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState(0);
+  const lockSeconds = usePinLockout(lockedUntil);
+  useEffect(() => {
+    if (visible) getPinStatus().then((status) => setLockedUntil(status.lockedUntil)).catch(() => setError('Die Sperre konnte nicht gelesen werden.'));
+  }, [visible]);
 
   // Beim Öffnen immer von vorne beginnen. React empfiehlt dafür das Anpassen
   // während des Renderns statt eines Effekts
@@ -59,7 +65,9 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
     setBusy(true);
     try {
       if (step === 'current') {
-        if (await verifyPin(enteredCode)) {
+        const result = await verifyPin(enteredCode);
+        setLockedUntil(result.lockedUntil);
+        if (result.valid) {
           setCode('');
           setStep('new');
         } else {
@@ -94,7 +102,7 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   }
 
   function handleDigit(digit) {
-    if (busy || code.length >= PIN_LENGTH) return;
+    if (busy || (step === 'current' && lockSeconds > 0) || code.length >= PIN_LENGTH) return;
     // Neue Ziffer hinten anhängen
     const next = code + digit;
     setCode(next);
@@ -122,13 +130,13 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
           {/* Platz für Fehler und Beschreibung ist immer reserviert, damit
               die Tasten beim Tippen nicht springen */}
           <View style={styles.errorSlot}>
-            <FieldError message={error} align="center" />
+            <FieldError message={step === 'current' && lockSeconds > 0 ? `Zu viele Versuche. Noch ${lockSeconds} Sekunden warten.` : error} align="center" />
           </View>
 
           <Keypad
             onDigit={handleDigit}
             onDelete={() => setCode((current) => current.slice(0, -1))}
-            disabled={busy}
+            disabled={busy || (step === 'current' && lockSeconds > 0)}
           />
 
           <Button title="Abbrechen" variant="secondary" size="medium" onPress={onCancel} style={styles.cancel} />
