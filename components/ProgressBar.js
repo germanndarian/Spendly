@@ -4,9 +4,12 @@ import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { radius } from '../theme/spacing';
 
+// progress = Anteil des Budgets, der ausgegeben ist (0.5 = 50 %)
 export default function ProgressBar({ progress }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
 
+  // Über 100 % heisst: Budget überschritten
   const isOver = progress > 1;
   // Balken nie breiter als 100 %
   const widthPercent = Math.min(Math.max(progress, 0), 1) * 100;
@@ -29,11 +32,13 @@ export default function ProgressBar({ progress }) {
 }
 
 const styles = StyleSheet.create({
+  // Die graue Schiene hinter dem Balken
   track: {
     height: 6,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
+  // Der gefüllte Teil. Die Breite in Prozent setzen wir direkt oben im Code.
   fill: {
     height: '100%',
     borderRadius: radius.pill,

@@ -10,7 +10,9 @@ import Icon from './Icon';
 
 const ACTION_WIDTH = 80; // Breite der Löschfläche (Konzept: 80 pt)
 
+// children = die Zeile, onDelete = «Löschen» wurde getippt, isFirst/isLast = runde Ecken oben bzw. unten
 export default function SwipeableRow({ children, onDelete, isFirst = false, isLast = false }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -21,6 +23,7 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
   // Ist die Löschfläche gerade offen? Daraus ergibt sich der Startpunkt der Geste.
   const [isOpen, setIsOpen] = useState(false);
 
+  // Schiebt die Zeile auf (offen) oder zu. Die Feder-Animation macht die Bewegung weich.
   const slideTo = useCallback(
     (open) => {
       setIsOpen(open);
@@ -91,13 +94,16 @@ export default function SwipeableRow({ children, onDelete, isFirst = false, isLa
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Rahmen um Zeile und Löschfläche
     wrapper: {
       position: 'relative',
       // Die Zeile verschwindet beim Wischen hinter dem Kartenrand
       overflow: 'hidden',
     },
+    // Die rote Löschfläche liegt hinter der Zeile, am rechten Rand
     actionLayer: {
       position: 'absolute',
       top: 0,
@@ -108,8 +114,11 @@ function createStyles(colors) {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    // Oberste Zeile: runde Ecke oben rechts
     actionFirst: { borderTopRightRadius: radius.card },
+    // Unterste Zeile: runde Ecke unten rechts
     actionLast: { borderBottomRightRadius: radius.card },
+    // Der Knopf füllt die ganze rote Fläche
     action: {
       flex: 1,
       alignSelf: 'stretch',
@@ -117,7 +126,9 @@ function createStyles(colors) {
       justifyContent: 'center',
       gap: 4,
     },
+    // Gedrückt: Knopf wird etwas blasser
     actionPressed: { opacity: 0.8 },
+    // Text «Löschen» unter dem Icon
     actionText: {
       ...typography.labelSm,
       color: colors.onDanger,

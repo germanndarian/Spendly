@@ -84,8 +84,7 @@ export default function RootNavigator() {
   // Solange die Datenbank lädt bzw. wenn sie nicht antwortet,
   // zeigen wir statt der Navigation eine kurze Rückmeldung.
   if (status !== 'ready') {
-    // NavigationContainer verwaltet, welche Screens offen sind. Über ref kann
-    // auch Code ausserhalb eines Screens navigieren (z. B. die Auto-Sperre).
+    // Noch keine Navigation: nur Ladeanzeige oder Fehlermeldung, mittig auf dem Screen
     return (
       <View style={[styles.fallback, { backgroundColor: colors.background }]}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -105,6 +104,8 @@ export default function RootNavigator() {
     );
   }
 
+  // NavigationContainer verwaltet, welche Screens offen sind. Über ref kann
+  // auch Code ausserhalb eines Screens navigieren (z. B. die Auto-Sperre).
   return (
     <NavigationContainer ref={navigationRef} theme={navigationTheme} onStateChange={() => setLocked(navigationRef.getCurrentRoute()?.name === 'Lock')}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -139,6 +140,7 @@ export default function RootNavigator() {
   );
 }
 
+// Styles für die Lade- und Fehleransicht
 const styles = StyleSheet.create({
   fallback: {
     flex: 1,

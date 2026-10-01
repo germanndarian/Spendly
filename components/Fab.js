@@ -6,7 +6,9 @@ import { useTheme } from '../theme/ThemeContext';
 import { spacing } from '../theme/spacing';
 import Icon from './Icon';
 
+// onPress = was beim Tippen passiert (öffnet «Neue Ausgabe»)
 export default function Fab({ onPress }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -25,8 +27,10 @@ export default function Fab({ onPress }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Runder Button, 56 × 56 pt, schwebt unten rechts über dem Inhalt
     fab: {
       position: 'absolute',
       right: spacing.md,
@@ -38,6 +42,7 @@ function createStyles(colors) {
       justifyContent: 'center',
       backgroundColor: colors.primaryButton,
     },
+    // Gedrückt: dunkleres Grün
     pressed: {
       backgroundColor: colors.accentPressed,
     },

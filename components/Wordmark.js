@@ -3,7 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { fonts } from '../theme/typography';
 
+// Das Logo: Schrift «spendly» mit grünem Punkt. Braucht keine Props.
 export default function Wordmark() {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
 
   return (
@@ -15,11 +17,13 @@ export default function Wordmark() {
 }
 
 const styles = StyleSheet.create({
+  // Schrift und Punkt nebeneinander, unten bündig
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 3,
   },
+  // Serifenschrift wie im Logo
   text: {
     fontFamily: fonts.serifBold,
     fontSize: 26,

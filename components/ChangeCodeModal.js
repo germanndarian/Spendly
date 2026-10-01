@@ -24,15 +24,22 @@ const TEXTS = {
   confirm: { title: 'Code bestätigen', description: 'Gib denselben Code nochmals ein.' },
 };
 
+// visible = sichtbar?, onCancel = Abbrechen, onDone = der neue Code ist gespeichert
 export default function ChangeCodeModal({ visible, onCancel, onDone }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // In welchem der drei Schritte sind wir? ('current', 'new' oder 'confirm')
   const [step, setStep] = useState('current');
+  // Der neue Code aus Schritt 2, damit wir ihn in Schritt 3 vergleichen können
   const [firstCode, setFirstCode] = useState('');
+  // Die Ziffern, die schon getippt sind
   const [code, setCode] = useState('');
+  // Fehlermeldung (null = keine)
   const [error, setError] = useState(null);
+  // true, solange gerade geprüft oder gespeichert wird (Tasten sind dann gesperrt)
   const [busy, setBusy] = useState(false);
   const [lockedUntil, setLockedUntil] = useState(0);
   const lockSeconds = usePinLockout(lockedUntil);
@@ -54,6 +61,7 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
     }
   }
 
+  // Falsche Eingabe: vibrieren, Punkte leeren, Fehler zeigen und zum passenden Schritt wechseln
   function fail(text, nextStep) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     setCode('');
@@ -61,9 +69,11 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
     setStep(nextStep);
   }
 
+  // Wird aufgerufen, sobald alle 6 Ziffern getippt sind. Was passiert, hängt vom Schritt ab.
   async function handleComplete(enteredCode) {
     setBusy(true);
     try {
+      // Schritt 1: Stimmt der aktuelle Code?
       if (step === 'current') {
         const result = await verifyPin(enteredCode);
         setLockedUntil(result.lockedUntil);
@@ -76,6 +86,7 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
         return;
       }
 
+      // Schritt 2: Den neuen Code merken und zur Bestätigung wechseln
       if (step === 'new') {
         setFirstCode(enteredCode);
         setCode('');
@@ -90,8 +101,10 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
         return;
       }
 
+      // Beide Eingaben stimmen überein: neuen Code (als Hash) speichern
       await setPin(enteredCode);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Dem Screen melden, dass der Code geändert ist
       onDone();
     } catch (saveError) {
       console.warn('Code konnte nicht geprüft oder gespeichert werden:', saveError);
@@ -101,7 +114,9 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
     }
   }
 
+  // Wird bei jedem Tipp auf eine Ziffer aufgerufen
   function handleDigit(digit) {
+    // Während der Prüfung, der Sperrzeit oder bei einem vollen Code: nichts tun
     if (busy || (step === 'current' && lockSeconds > 0) || code.length >= PIN_LENGTH) return;
     // Neue Ziffer hinten anhängen
     const next = code + digit;
@@ -146,14 +161,17 @@ export default function ChangeCodeModal({ visible, onCancel, onDone }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Abgedunkelter Hintergrund, der Dialog steht in der Mitte
     overlay: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing.screen,
     },
+    // Weisse Dialog-Karte, höchstens 380 pt breit
     card: {
       width: '100%',
       maxWidth: 380,
@@ -164,11 +182,13 @@ function createStyles(colors) {
       padding: spacing.lg,
       alignItems: 'center',
     },
+    // Titel des aktuellen Schritts
     title: {
       ...typography.headlineSm,
       color: colors.text,
       textAlign: 'center',
     },
+    // Erklärung unter dem Titel
     description: {
       ...typography.bodyMd,
       color: colors.textSecondary,
@@ -176,14 +196,17 @@ function createStyles(colors) {
       marginTop: spacing.xs,
       minHeight: 40, // zwei Zeilen
     },
+    // Abstand über den Code-Punkten
     dots: {
       marginTop: spacing.sm,
     },
+    // Reservierter Platz für die Fehlermeldung
     errorSlot: {
       minHeight: 48,
       alignSelf: 'stretch',
       justifyContent: 'center',
     },
+    // Abbrechen-Button: volle Breite, mit Abstand zum Zahlenblock
     cancel: {
       alignSelf: 'stretch',
       marginTop: spacing.md,

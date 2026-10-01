@@ -1,5 +1,5 @@
 // Referenz auf den NavigationContainer. Damit können wir auch ausserhalb
-// eines Screens navigieren, z. B. beim automatischen Sperren (Phase 3).
+// eines Screens navigieren, z. B. beim automatischen Sperren.
 import { createNavigationContainerRef } from '@react-navigation/native';
 
 // Wird in RootNavigator an den NavigationContainer gehängt

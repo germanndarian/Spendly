@@ -118,10 +118,11 @@ export default function LockScreen({ navigation }) {
       if (!codeExists) {
         // Allererster Start: zuerst einen Code festlegen
         setMode('setup');
-      // Code vorhanden und Face ID erlaubt: den Face-ID-Button zeigen
       } else if (biometryState.available && settings.biometricEnabled) {
+        // Code vorhanden und Face ID erlaubt: den Face-ID-Button zeigen
         setMode('biometric');
       } else {
+        // Face ID geht nicht oder ist ausgeschaltet: direkt die Code-Eingabe
         setMode('code');
         // Hinweis nur, wenn Biometrie nicht geht – nicht, wenn sie
         // in den Einstellungen bewusst ausgeschaltet wurde
@@ -259,8 +260,8 @@ export default function LockScreen({ navigation }) {
     } catch (error) {
       console.warn('Code konnte nicht geprüft werden:', error);
       failCode('Der Code konnte nicht geprüft werden. Versuche es nochmals.');
-    // finally läuft immer – egal ob es geklappt hat oder nicht
     } finally {
+      // finally läuft immer – egal ob es geklappt hat oder nicht
       setBusy(false);
     }
   }
@@ -490,22 +491,26 @@ function createStyles(colors) {
       backgroundColor: colors.background,
       paddingHorizontal: spacing.screen,
     },
+    // Nur die Ladeanzeige, mittig auf dem Screen
     centerOnly: {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    // Obere Leiste: Logo links, «Geschützt» rechts
     topBar: {
       minHeight: 56,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    // Mitte: Symbol, Titel und Text
     center: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm,
     },
+    // Grüner Kreis hinter dem Face-ID-Symbol
     iconCircle: {
       width: 96,
       height: 96,
@@ -515,22 +520,27 @@ function createStyles(colors) {
       backgroundColor: colors.accentSoft,
       marginBottom: spacing.lg,
     },
+    // Nach einem Fehlversuch ist der Kreis rot
     iconCircleError: { backgroundColor: colors.dangerSoft },
+    // Grosser Titel, z. B. «Willkommen zurück»
     title: {
       ...typography.headlineMd,
       color: colors.text,
       textAlign: 'center',
     },
+    // Erklärung unter dem Titel
     subtitle: {
       ...typography.bodyLg,
       color: colors.textSecondary,
       textAlign: 'center',
       maxWidth: 300,
     },
+    // Buttons unten, in der Daumenzone
     actions: {
       gap: spacing.sm,
       paddingBottom: spacing.md,
     },
+    // Datenschutz-Hinweis mit Schloss-Symbol
     privacy: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -538,6 +548,7 @@ function createStyles(colors) {
       gap: 6,
       marginTop: spacing.sm,
     },
+    // Text des Datenschutz-Hinweises
     privacyText: {
       ...typography.labelSm,
       color: colors.textSecondary,
@@ -548,6 +559,7 @@ function createStyles(colors) {
       alignItems: 'center',
       paddingTop: spacing.sm,
     },
+    // Hinweis-Karte oben, z. B. «Face ID ist nicht erlaubt»
     banner: {
       alignSelf: 'stretch',
       minHeight: 56,
@@ -559,11 +571,13 @@ function createStyles(colors) {
       backgroundColor: colors.card,
       marginBottom: spacing.lg,
     },
+    // Symbol und Text nebeneinander
     bannerTop: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
     },
+    // Text des Hinweises
     bannerText: {
       ...typography.labelMd,
       color: colors.text,
@@ -576,25 +590,32 @@ function createStyles(colors) {
       marginLeft: 26, // bündig mit dem Text neben dem Symbol
       borderRadius: 8,
     },
+    // Gedrückt: Fläche wird kurz grau
     pressedSurface: { backgroundColor: colors.pressed },
+    // Text des Links «In Einstellungen erlauben»
     bannerLinkText: {
       ...typography.labelMd,
       color: colors.accent,
     },
+    // Titel der Code-Eingabe, z. B. «Code eingeben»
     codeTitle: {
       ...typography.headlineLg,
       color: colors.text,
       textAlign: 'center',
     },
+    // Feste Höhe für zwei Zeilen, damit der Zahlenblock nicht springt
     codeSubtitle: { minHeight: 48 },
+    // Abstand über den Code-Punkten
     dots: {
       marginTop: spacing.md,
     },
+    // Reservierter Platz für die Fehlermeldung
     errorSlot: {
       minHeight: 56,
       alignSelf: 'stretch',
       justifyContent: 'center',
     },
+    // Abstand über den Text-Buttons unten
     bottomAction: { marginTop: spacing.sm },
   });
 }

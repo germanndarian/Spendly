@@ -8,6 +8,8 @@ import { radius, spacing } from '../theme/spacing';
 import Button from './Button';
 import FieldError from './FieldError';
 
+// Props: visible = sichtbar?, title/description = Texte, initialValue = Startwert, prefix = Text vor dem Feld,
+// keyboardType = Tastatur, validate = Prüffunktion, onCancel/onSave = was bei den Buttons passiert
 export default function PromptModal({
   visible,
   title,
@@ -19,9 +21,11 @@ export default function PromptModal({
   onCancel,
   onSave,
 }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Der Text, der gerade im Eingabefeld steht
   const [value, setValue] = useState(initialValue);
 
   // Beim Öffnen immer mit dem aktuellen Wert starten.
@@ -58,13 +62,16 @@ export default function PromptModal({
               value={value}
               onChangeText={setValue}
               keyboardType={keyboardType}
+              // Die Tastatur öffnet sich sofort
               autoFocus
+              // Der bestehende Wert ist markiert und lässt sich direkt überschreiben
               selectTextOnFocus
               style={styles.input}
               accessibilityLabel={title}
             />
           </View>
 
+          {/* Fehlermeldung, falls der Text ungültig ist */}
           <FieldError message={error} />
 
           <View style={styles.actions}>
@@ -84,14 +91,17 @@ export default function PromptModal({
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Abgedunkelter Hintergrund über dem ganzen Screen, der Dialog steht in der Mitte
     overlay: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing.screen,
     },
+    // Weisse Dialog-Karte, höchstens 380 pt breit
     card: {
       width: '100%',
       maxWidth: 380,
@@ -102,14 +112,17 @@ function createStyles(colors) {
       padding: spacing.lg,
       gap: spacing.sm,
     },
+    // Titel des Dialogs
     title: {
       ...typography.headlineSm,
       color: colors.text,
     },
+    // Erklärung unter dem Titel
     description: {
       ...typography.bodyMd,
       color: colors.textSecondary,
     },
+    // Eingabefeld mit Rahmen (davor z. B. «CHF»)
     inputRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -122,10 +135,12 @@ function createStyles(colors) {
       backgroundColor: colors.background,
       marginTop: spacing.xs,
     },
+    // Text vor dem Eingabefeld
     prefix: {
       ...typography.bodyLg,
       color: colors.textSecondary,
     },
+    // Das Eingabefeld selbst, mit gleich breiten Ziffern
     input: {
       flex: 1,
       minHeight: 48,
@@ -133,11 +148,13 @@ function createStyles(colors) {
       color: colors.text,
       fontVariant: ['tabular-nums'],
     },
+    // Die beiden Buttons nebeneinander
     actions: {
       flexDirection: 'row',
       gap: spacing.sm,
       marginTop: spacing.sm,
     },
+    // Beide Buttons sind gleich breit
     action: { flex: 1 },
   });
 }

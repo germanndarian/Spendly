@@ -237,12 +237,14 @@ function createStyles(colors) {
       paddingHorizontal: spacing.screen,
       paddingBottom: spacing.xl,
     },
+    // Die drei Chips (Hell, Dunkel, System) nebeneinander. Bei wenig Platz brechen sie um.
     appearanceRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
       padding: spacing.md,
     },
+    // Versionsnummer ganz unten, klein und grau
     version: {
       ...typography.labelSm,
       color: colors.textSecondary,

@@ -21,10 +21,10 @@ export default function Button({
   iconFamily,
   iconPosition = 'left',
   disabled = false,
-  accessibilityLabel,
   accessibilityHint,
   style,
 }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -43,7 +43,7 @@ export default function Button({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityLabel={title}
       accessibilityHint={accessibilityHint}
       // Screenreader sagt «deaktiviert», wenn man nicht tippen kann
       accessibilityState={{ disabled }}
@@ -69,6 +69,7 @@ export default function Button({
 // Pro Variante gibt es einen normalen und einen gedrückten Stil
 function createStyles(colors) {
   return StyleSheet.create({
+    // Gemeinsame Form aller Buttons: Inhalt in einer Zeile, mittig, mit Abstand zwischen Icon und Text
     base: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -77,22 +78,30 @@ function createStyles(colors) {
       borderRadius: radius.control,
       paddingHorizontal: spacing.md,
     },
+    // Grosser Button (Hauptaktion): 56 pt hoch
     large: { minHeight: 56 },
+    // Mittlerer Button: 48 pt hoch, das ist die kleinste erlaubte Tippfläche
     medium: { minHeight: TOUCH_MIN },
+    // Schrift des Button-Textes
     label: typography.button,
 
+    // Primary: grüne Fläche. Jede Variante hat einen normalen und einen gedrückten Stil (…Pressed).
     primary: { backgroundColor: colors.primaryButton },
     primaryPressed: { backgroundColor: colors.accentPressed },
 
+    // Secondary: weisse Fläche mit grauem Rahmen
     secondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
     secondaryPressed: { backgroundColor: colors.pressed },
 
+    // Destructive: roter Rahmen, nur für Löschen
     destructive: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.danger },
     destructivePressed: { backgroundColor: colors.dangerSoft },
 
+    // Text: keine Fläche, nur der Text
     text: { backgroundColor: 'transparent' },
     textPressed: { backgroundColor: colors.pressed },
 
+    // Deaktiviert: graue Fläche, nicht tippbar
     disabled: { backgroundColor: colors.disabled, borderColor: colors.disabled },
   });
 }
