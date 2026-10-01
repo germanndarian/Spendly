@@ -8,6 +8,8 @@ import { radius, spacing } from '../theme/spacing';
 import Button from './Button';
 import Icon from './Icon';
 
+// Props: visible = sichtbar?, title/description = Texte, options = die Auswahl, selectedKey = aktuell gewählt,
+// onSelect = Auswahl getroffen, onCancel = Abbrechen
 export default function ChoiceModal({
   visible,
   title,
@@ -17,6 +19,7 @@ export default function ChoiceModal({
   onSelect,
   onCancel,
 }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -62,14 +65,17 @@ export default function ChoiceModal({
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Abgedunkelter Hintergrund, der Dialog steht in der Mitte
     overlay: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing.screen,
     },
+    // Weisse Dialog-Karte, höchstens 380 pt breit
     card: {
       width: '100%',
       maxWidth: 380,
@@ -80,14 +86,17 @@ function createStyles(colors) {
       padding: spacing.lg,
       gap: spacing.sm,
     },
+    // Titel des Dialogs
     title: {
       ...typography.headlineSm,
       color: colors.text,
     },
+    // Erklärung unter dem Titel
     description: {
       ...typography.bodyMd,
       color: colors.textSecondary,
     },
+    // Die Auswahlliste mit Rahmen und runden Ecken
     list: {
       borderRadius: radius.control,
       borderWidth: 1,
@@ -95,6 +104,7 @@ function createStyles(colors) {
       overflow: 'hidden',
       marginVertical: spacing.sm,
     },
+    // Eine Auswahlzeile (mindestens 52 pt hoch), Text links und Häkchen rechts
     row: {
       minHeight: 52,
       flexDirection: 'row',
@@ -102,15 +112,19 @@ function createStyles(colors) {
       justifyContent: 'space-between',
       paddingHorizontal: spacing.md,
     },
+    // Trennlinie zwischen den Zeilen (nicht über der ersten)
     rowDivider: {
       borderTopWidth: 1,
       borderTopColor: colors.border,
     },
+    // Gedrückt: Zeile wird kurz grau
     rowPressed: { backgroundColor: colors.pressed },
+    // Text einer Auswahl
     label: {
       ...typography.bodyLg,
       color: colors.text,
     },
+    // Die gewählte Auswahl ist fetter
     labelSelected: {
       fontFamily: typography.headlineSm.fontFamily,
     },

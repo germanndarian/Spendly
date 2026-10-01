@@ -14,11 +14,14 @@ import { formatMonthName, formatShortDate } from '../utils/format';
 const BAR_AREA_HEIGHT = 56; // Höhe des Bereichs für die Balken
 const MIN_BAR_HEIGHT = 4; // auch Tage ohne Ausgaben sind sichtbar
 
+// today = heutiges Datum, dailyTotals = Ausgaben pro Tag (Rappen), dailyBudgetRappen = Tagesbudget
 export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Jahr, Monat (ab 0) und Tag von heute
   const year = today.getFullYear();
   const month = today.getMonth();
   const todayDay = today.getDate();
@@ -33,7 +36,9 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
   // Für jeden Tag des Monats einen Eintrag vorbereiten
   const days = [];
   for (let day = 1; day <= daysInMonth; day++) {
+    // Ausgaben dieses Tages in Rappen (Tag 1 steht an Stelle 0)
     const total = dailyTotals[day - 1] ?? 0;
+    // Tage nach heute sind noch nicht passiert
     const isFuture = day > todayDay;
     days.push({
       day,
@@ -47,6 +52,7 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
   // Wie viele Tage lagen über dem Tagesbudget? (für Legende und Screenreader)
   const overCount = days.filter((d) => d.isOver).length;
 
+  // Texte für die Legende, die Beschriftung und den Screenreader
   const monthName = formatMonthName(today);
   const firstLabel = formatShortDate(new Date(year, month, 1));
   const lastLabel = formatShortDate(new Date(year, month, daysInMonth));
@@ -110,11 +116,14 @@ export default function MonthStrip({ today, dailyTotals, dailyBudgetRappen }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Innenabstand der Karte
     card: {
       padding: spacing.md,
     },
+    // Titel links, Legende rechts. Bei wenig Platz bricht die Legende um.
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -123,47 +132,58 @@ function createStyles(colors) {
       gap: spacing.sm,
       marginBottom: spacing.md,
     },
+    // Titel, z. B. «September (30 Tage)»
     title: {
       ...typography.labelMd,
       fontFamily: typography.headlineSm.fontFamily,
       color: colors.text,
     },
+    // Die beiden Legenden-Einträge nebeneinander
     legend: {
       flexDirection: 'row',
       gap: 12,
     },
+    // Farbpunkt und Text eines Legenden-Eintrags
     legendItem: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
     },
+    // Kleiner Farbpunkt in der Legende
     legendDot: {
       width: 6,
       height: 6,
       borderRadius: 3,
     },
+    // Text der Legende
     legendText: {
       ...typography.labelSm,
       color: colors.textSecondary,
     },
+    // Bereich für die Balken: alle stehen unten bündig nebeneinander
     bars: {
       height: BAR_AREA_HEIGHT,
       flexDirection: 'row',
       alignItems: 'flex-end',
       gap: 3,
     },
+    // Eine Spalte pro Tag, alle gleich breit
     dayColumn: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'flex-end',
     },
+    // Normaler Balken (vergangene Tage, grau)
     bar: {
       width: '100%',
       borderRadius: 2,
       backgroundColor: colors.chartBar,
     },
+    // Heute: grüner Balken
     barToday: { backgroundColor: colors.accent },
+    // Zukunft: blasser Platzhalter
     barFuture: { backgroundColor: colors.border },
+    // Roter Punkt über dem Balken: Tagesbudget überschritten
     overDot: {
       width: 4,
       height: 4,
@@ -171,6 +191,7 @@ function createStyles(colors) {
       marginBottom: 3,
       backgroundColor: colors.danger,
     },
+    // Grüner Punkt über dem heutigen Balken
     todayDot: {
       width: 6,
       height: 6,
@@ -178,15 +199,18 @@ function createStyles(colors) {
       marginBottom: 3,
       backgroundColor: colors.accent,
     },
+    // Beschriftung unter den Balken: Anfang, heute, Ende
     labels: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginTop: spacing.sm,
     },
+    // Normale Beschriftung (grau)
     axisLabel: {
       ...typography.labelSm,
       color: colors.textSecondary,
     },
+    // «Heute» ist fett und grün hervorgehoben
     axisToday: {
       fontFamily: typography.headlineSm.fontFamily,
       color: colors.accent,

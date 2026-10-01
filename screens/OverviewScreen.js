@@ -36,6 +36,7 @@ export default function OverviewScreen({ navigation }) {
   // mitten im Anschauen verschwindet.
   const [showHint] = useState(() => !settings.hintSeen);
 
+  // Heutiges Datum (für die restlichen Tage und den Monatsstreifen)
   const today = new Date();
   // Alle Kennzahlen auf einmal: Heute noch frei, überschritten, Fortschritt …
   // (siehe utils/budget.js)
@@ -44,6 +45,7 @@ export default function OverviewScreen({ navigation }) {
   const recentExpenses = sortNewestFirst(expenses).slice(0, 3);
   // 0.755 -> 76 (Prozent für die Anzeige)
   const percent = Math.round(status.progress * 100);
+  // Gibt es schon Ausgaben? Wenn nicht, zeigen wir stattdessen den Leerzustand.
   const hasExpenses = expenses.length > 0;
 
   useEffect(() => {
@@ -215,67 +217,80 @@ function createStyles(colors) {
       paddingHorizontal: spacing.screen,
       paddingBottom: 96, // Platz, damit der "+"-Button nichts verdeckt
     },
+    // Abstand zwischen den Blöcken
     section: {
       marginBottom: spacing.lg,
     },
+    // «Heute noch frei» links, «Auf Kurs» rechts
     heroHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: spacing.xs,
     },
+    // Kleine Überschrift in Grossbuchstaben
     overline: {
       ...typography.labelSm,
       color: colors.textSecondary,
       textTransform: 'uppercase',
     },
+    // Die grösste Zahl der ganzen App
     heroAmount: {
       ...typography.displayHero,
       color: colors.text,
       marginTop: spacing.xs,
     },
+    // Erklärung unter der grossen Zahl
     heroCaption: {
       ...typography.bodyMd,
       color: colors.textSecondary,
       marginTop: spacing.xs,
     },
+    // Rote Meldung: immer mit Icon und Text, nie nur Farbe
     overBudget: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
       marginVertical: spacing.sm,
     },
+    // Text der roten Meldung (bricht bei Platzmangel um)
     overBudgetText: {
       ...typography.headlineSm,
       color: colors.danger,
       flexShrink: 1,
     },
+    // Text und Fortschrittsbalken untereinander
     progressBlock: {
       marginTop: spacing.lg,
       gap: spacing.sm,
     },
+    // «CHF 604.00 von CHF 800.00» links, Prozent rechts
     progressTextRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       gap: spacing.sm,
     },
+    // Text zum Fortschritt, gleich breite Ziffern
     progressText: {
       ...typography.labelSm,
       color: colors.text,
       fontVariant: ['tabular-nums'],
       flexShrink: 1,
     },
+    // Prozentzahl rechts
     progressPercent: {
       ...typography.labelSm,
       color: colors.textSecondary,
       fontVariant: ['tabular-nums'],
     },
+    // «Letzte Ausgaben» links, «Alle anzeigen» rechts
     listHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: spacing.xs,
     },
+    // Überschrift der Liste
     listTitle: {
       ...typography.headlineSm,
       color: colors.text,
@@ -287,6 +302,7 @@ function createStyles(colors) {
       marginRight: -spacing.sm, // Text bündig mit dem Rand, Tippfläche trotzdem gross
       borderRadius: 8,
     },
+    // Gedrückt: Link wird kurz grau
     linkPressed: { backgroundColor: colors.pressed },
     // Karte mit Icon links und Text rechts (Leerzustand und Sparziel)
     infoCard: {
@@ -294,6 +310,7 @@ function createStyles(colors) {
       alignItems: 'center',
       gap: spacing.md,
     },
+    // Runder Kreis hinter dem Symbol der Info-Karte
     infoIcon: {
       width: 48,
       height: 48,
@@ -302,20 +319,26 @@ function createStyles(colors) {
       justifyContent: 'center',
       backgroundColor: colors.subtle,
     },
+    // Titel und Text untereinander, sie nehmen den freien Platz ein
     infoTexts: {
       flex: 1,
       gap: 2,
     },
+    // Abstand zwischen Liste und Sparziel
     savingsCard: { marginTop: spacing.lg },
+    // Grüner Kreis hinter dem Sparschwein
     savingsIcon: { backgroundColor: colors.accentSoft },
+    // Titel der Info-Karte
     infoTitle: {
       ...typography.headlineSm,
       color: colors.text,
     },
+    // Erklärung in der Info-Karte
     infoText: {
       ...typography.bodyMd,
       color: colors.textSecondary,
     },
+    // Text von «Alle anzeigen» (grün)
     linkText: {
       ...typography.labelMd,
       color: colors.accent,

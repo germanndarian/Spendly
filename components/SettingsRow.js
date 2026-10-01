@@ -23,13 +23,16 @@ export default function SettingsRow({
   isLast = false,
   accessibilityHint,
 }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Hat die Zeile einen Schalter? (false ist auch ein Wert, darum !== undefined)
   const hasSwitch = switchValue !== undefined;
+  // Textfarbe: rot bei «destructive», grau wenn deaktiviert, sonst normal
   const labelColor = destructive ? colors.danger : disabled ? colors.textTertiary : colors.text;
+  // Iconfarbe: gleiche Regel, normal ist sie grün
   const iconColor = destructive ? colors.danger : disabled ? colors.textTertiary : colors.accent;
 
   // Bei einer Schalter-Zeile schaltet ein Tipp auf die Zeile den Schalter um
@@ -53,6 +56,7 @@ export default function SettingsRow({
           onValueChange={onSwitchChange}
           disabled={disabled}
           trackColor={{ false: colors.border, true: colors.primaryButton }}
+          // Der Schalterknopf ist in Hell und Dunkel weiss
           thumbColor="#FFFFFF"
           ios_backgroundColor={colors.border}
           // Der Screenreader liest die ganze Zeile vor, nicht den Schalter einzeln
@@ -85,8 +89,10 @@ export default function SettingsRow({
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Eine Zeile: mindestens 56 pt hoch, Icon – Text – Wert nebeneinander
     row: {
       minHeight: 56,
       flexDirection: 'row',
@@ -95,7 +101,9 @@ function createStyles(colors) {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
     },
+    // Gedrückt: Zeile wird kurz grau
     pressed: { backgroundColor: colors.pressed },
+    // Abgerundetes Quadrat hinter dem Icon
     iconBox: {
       width: 36,
       height: 36,
@@ -104,24 +112,30 @@ function createStyles(colors) {
       justifyContent: 'center',
       backgroundColor: colors.subtle,
     },
+    // Helles Rot hinter dem Icon bei «Alle Daten löschen»
     iconBoxDanger: { backgroundColor: colors.dangerSoft },
+    // Label und Hinweis untereinander, sie nehmen den freien Platz ein
     texts: {
       flex: 1,
       gap: 2,
     },
+    // Haupttext der Zeile
     label: {
       ...typography.bodyLg,
       color: colors.text,
     },
+    // Kleiner Zusatztext unter dem Label
     hint: {
       ...typography.labelSm,
       color: colors.textSecondary,
     },
+    // Wert rechts, z. B. «CHF 800.00»
     value: {
       ...typography.bodyMd,
       color: colors.textSecondary,
       fontVariant: ['tabular-nums'],
     },
+    // Trennlinie unten (nicht bei der letzten Zeile)
     divider: {
       position: 'absolute',
       left: 64, // bündig mit der Textspalte (16 + 36 + 12)

@@ -30,15 +30,6 @@ export async function listExpenses() {
   return rows.map(toExpense);
 }
 
-// Eine einzelne Ausgabe (zum Bearbeiten), oder null.
-export async function getExpense(id) {
-  const db = await getDatabase();
-  // Das ? ist ein Platzhalter. SQLite setzt die id sicher ein – so kann
-  // niemand über eine Eingabe eigene SQL-Befehle einschleusen (SQL-Injection).
-  const row = await db.getFirstAsync(`SELECT ${COLUMNS} FROM expenses WHERE id = ?`, id);
-  return row ? toExpense(row) : null;
-}
-
 // Neue Ausgabe anlegen. Die id erzeugen wir selbst, damit sie stabil bleibt.
 export async function addExpense({ amountRappen, category, description, date }) {
   const expense = {

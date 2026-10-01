@@ -3,6 +3,7 @@
 // MaterialCommunityIcons (family="mci").
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
+// name = Name des Icons, size = Grösse in pt, color = Farbe, family = welche Icon-Sammlung
 export default function Icon({ name, size = 20, color, family = 'feather' }) {
   // family='mci' für Face-ID- und Fingerabdruck-Symbole, sonst immer Feather
   if (family === 'mci') {

@@ -6,7 +6,9 @@ import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import Card from './Card';
 
+// title = Überschrift, footer = Hinweis unter der Karte, children = die Zeilen
 export default function SettingsSection({ title, footer, children }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -25,11 +27,14 @@ export default function SettingsSection({ title, footer, children }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Abstand zur nächsten Gruppe
     section: {
       marginBottom: spacing.lg,
     },
+    // Kleine Überschrift in Grossbuchstaben
     title: {
       ...typography.labelSm,
       color: colors.textSecondary,
@@ -37,6 +42,7 @@ function createStyles(colors) {
       marginLeft: spacing.xs,
       marginBottom: spacing.sm,
     },
+    // Hinweistext unter der Karte
     footer: {
       ...typography.labelSm,
       color: colors.textSecondary,

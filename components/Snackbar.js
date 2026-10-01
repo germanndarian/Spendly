@@ -9,9 +9,12 @@ import { typography } from '../theme/typography';
 import { radius, spacing, TOUCH_MIN } from '../theme/spacing';
 import Icon from './Icon';
 
+// So lange bleibt die Meldung sichtbar (5000 ms = 5 Sekunden)
 const DURATION_MS = 5000;
 
+// visible = anzeigen?, message = Text, icon = Symbol, actionLabel/onAction = Knopf wie «Rückgängig», onHide = wird nach 5 s oder nach dem Tipp aufgerufen
 export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
@@ -21,6 +24,7 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
   const [slide] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    // Keine Meldung: nichts zu tun
     if (!visible) return undefined;
 
     // Von unten einblenden
@@ -55,7 +59,9 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
       accessibilityLiveRegion="polite"
     >
       <View style={styles.bar}>
+        {/* Symbol links (Standard ist ein Häkchen) */}
         <Icon name={icon} size={20} color={colors.snackbarAction} />
+        {/* Meldungstext, höchstens zwei Zeilen */}
         <Text style={styles.message} numberOfLines={2}>
           {message}
         </Text>
@@ -78,13 +84,16 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Schwebt über allen Screens, mit seitlichem Rand
     wrapper: {
       position: 'absolute',
       left: spacing.screen,
       right: spacing.screen,
     },
+    // Dunkler Balken mit Symbol, Text und Knopf nebeneinander
     bar: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -95,6 +104,7 @@ function createStyles(colors) {
       borderRadius: radius.card,
       backgroundColor: colors.snackbar,
     },
+    // Meldungstext, er nimmt den freien Platz ein
     message: {
       ...typography.bodyMd,
       fontFamily: typography.headlineSm.fontFamily,
@@ -108,7 +118,9 @@ function createStyles(colors) {
       paddingHorizontal: 12,
       borderRadius: radius.control,
     },
+    // Gedrückt: Knopf wird blasser
     actionPressed: { opacity: 0.6 },
+    // Text des Knopfs (hellgrün, damit er auf dunkel lesbar ist)
     actionText: {
       ...typography.labelMd,
       color: colors.snackbarAction,

@@ -1,6 +1,7 @@
 // Formatierung von Beträgen und Daten (reine Funktionen, ohne Intl).
 // Beträge sind immer ganze Rappen (1 Franken = 100 Rappen), nie Kommazahlen.
 
+// Monatsnamen. Stelle 0 = Januar (so zählt auch JavaScript).
 const MONTHS = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
@@ -10,6 +11,7 @@ const MONTHS_SHORT = [
   'Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni',
   'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.',
 ];
+// Wochentage. Stelle 0 = Sonntag (so zählt getDay()).
 const WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
 // Fügt alle drei Ziffern (von rechts) einen Apostroph ein: "1240" -> "1'240"

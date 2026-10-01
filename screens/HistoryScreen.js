@@ -144,6 +144,7 @@ export default function HistoryScreen({ navigation }) {
         )}
         // So wird jede einzelne Ausgabe gezeichnet
         renderItem={({ item, index, section }) => {
+          // Die erste und die letzte Zeile eines Tages bekommen runde Ecken
           const isFirst = index === 0;
           const isLast = index === section.data.length - 1;
           // SwipeableRow macht die Zeile wischbar: nach links -> «Löschen»
@@ -206,6 +207,7 @@ function createStyles(colors) {
       paddingHorizontal: spacing.screen,
       paddingBottom: 96, // Platz für den "+"-Button
     },
+    // Suchfeld: Lupe, Eingabe und «x» nebeneinander, mindestens 52 pt hoch
     search: {
       minHeight: 52,
       flexDirection: 'row',
@@ -218,12 +220,14 @@ function createStyles(colors) {
       borderColor: colors.border,
       backgroundColor: colors.card,
     },
+    // Das Eingabefeld füllt den freien Platz
     searchInput: {
       flex: 1,
       minHeight: 48,
       ...typography.bodyLg,
       color: colors.text,
     },
+    // Kleiner runder Knopf zum Leeren der Suche
     clearButton: {
       width: 36,
       height: 36,
@@ -232,6 +236,7 @@ function createStyles(colors) {
       justifyContent: 'center',
       backgroundColor: colors.subtle,
     },
+    // Gedrückt: Knopf wird kurz grau
     clearPressed: { backgroundColor: colors.pressed },
     // Chips laufen bis an den Bildschirmrand
     chipScroller: {
@@ -242,6 +247,7 @@ function createStyles(colors) {
       gap: spacing.sm,
       paddingHorizontal: spacing.screen,
     },
+    // Tages-Überschrift: Datum links, Tagessumme rechts
     sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -250,10 +256,12 @@ function createStyles(colors) {
       marginTop: spacing.lg,
       marginBottom: spacing.sm,
     },
+    // Datum des Tages, z. B. «Heute»
     sectionTitle: {
       ...typography.labelMd,
       color: colors.textSecondary,
     },
+    // Summe aller Ausgaben dieses Tages
     sectionTotal: {
       ...typography.currencyMd,
       fontSize: 15,

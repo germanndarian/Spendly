@@ -11,7 +11,9 @@ import Icon from './Icon';
 // null = leeres Feld unten links, damit die 0 in der Mitte steht
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', 'delete'];
 
+// onDigit = eine Ziffer wurde getippt, onDelete = Löschtaste, disabled = Tasten sperren (während der Prüfung)
 export default function Keypad({ onDigit, onDelete, disabled = false }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -53,8 +55,10 @@ export default function Keypad({ onDigit, onDelete, disabled = false }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Raster: drei Tasten pro Zeile
     grid: {
       width: 248, // 3 x 72 pt + 2 x 16 pt Abstand
       alignSelf: 'center',
@@ -62,6 +66,7 @@ function createStyles(colors) {
       flexWrap: 'wrap',
       gap: spacing.md,
     },
+    // Eine runde Taste, 72 × 72 pt gross
     key: {
       width: 72,
       height: 72,
@@ -73,7 +78,9 @@ function createStyles(colors) {
     keyFilled: {
       backgroundColor: colors.subtle,
     },
+    // Gedrückt: Taste wird kurz grau (Rückmeldung für den Finger)
     keyPressed: { backgroundColor: colors.pressed },
+    // Grosse Ziffer, alle Ziffern gleich breit
     keyLabel: {
       ...typography.headlineMd,
       fontSize: 24,

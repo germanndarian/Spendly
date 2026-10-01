@@ -5,7 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { spacing } from '../theme/spacing';
 
+// length = Anzahl Stellen des Codes, filled = wie viele schon getippt sind, hasError = rot anzeigen
 export default function CodeDots({ length, filled, hasError = false }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -31,13 +33,16 @@ export default function CodeDots({ length, filled, hasError = false }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Alle Punkte nebeneinander, mittig
     row: {
       flexDirection: 'row',
       justifyContent: 'center',
       gap: spacing.md,
     },
+    // Leerer Punkt: nur ein Rand
     dot: {
       width: 14,
       height: 14,
@@ -45,10 +50,12 @@ function createStyles(colors) {
       borderWidth: 1.5,
       borderColor: colors.textTertiary,
     },
+    // Eingegebene Ziffer: grün gefüllt
     dotFilled: {
       backgroundColor: colors.accent,
       borderColor: colors.accent,
     },
+    // Falscher Code: rot gefüllt
     dotError: {
       backgroundColor: colors.danger,
       borderColor: colors.danger,

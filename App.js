@@ -4,8 +4,10 @@ import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+// Schriften: Inter für normalen Text, Newsreader (Serife) für grosse Beträge
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Newsreader_400Regular, Newsreader_700Bold } from '@expo-google-fonts/newsreader';
+// Unsere eigenen Bausteine: Daten, Farbschema und Navigation
 import { DataProvider } from './storage/DataContext';
 import { ThemeProvider } from './theme/ThemeContext';
 import RootNavigator from './navigation/RootNavigator';

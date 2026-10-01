@@ -10,6 +10,7 @@ import Icon from './Icon';
 
 // label = Text, dotColor = farbiger Punkt, selected = gewählt, onPress = was beim Tippen passiert
 export default function Chip({ label, dotColor, selected = false, onPress }) {
+  // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   // Styles mit den aktuellen Farben bauen (neu nur, wenn sich die Farben ändern)
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -38,8 +39,10 @@ export default function Chip({ label, dotColor, selected = false, onPress }) {
   );
 }
 
+// Alle Styles dieser Komponente. Als Funktion, weil sie die aktuellen Farben brauchen.
 function createStyles(colors) {
   return StyleSheet.create({
+    // Runde Kapsel, mindestens 48 pt hoch (gut tippbar)
     chip: {
       minHeight: TOUCH_MIN,
       flexDirection: 'row',
@@ -51,22 +54,28 @@ function createStyles(colors) {
       borderColor: colors.border,
       backgroundColor: colors.card,
     },
+    // Gedrückt (nicht gewählt): leicht graue Fläche
     pressed: { backgroundColor: colors.pressed },
+    // Gewählt: grüne Fläche
     selected: {
       backgroundColor: colors.primaryButton,
       borderColor: colors.primaryButton,
     },
+    // Gewählt und gedrückt: etwas dunkleres Grün
     selectedPressed: { backgroundColor: colors.accentPressed },
+    // Kleiner Farbpunkt der Kategorie
     dot: {
       width: 8,
       height: 8,
       borderRadius: 4,
     },
+    // Text im Chip
     label: {
       ...typography.bodyMd,
       fontFamily: typography.labelMd.fontFamily,
       color: colors.text,
     },
+    // Text auf der grünen Fläche ist weiss
     selectedLabel: { color: colors.onAccent },
   });
 }

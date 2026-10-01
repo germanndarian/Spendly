@@ -55,6 +55,7 @@ export default function NewExpenseScreen({ navigation, route }) {
   // Die Ausgabe, die bearbeitet wird (oder null bei einer neuen)
   const existing = isEditMode ? expenses.find((expense) => expense.id === expenseId) : null;
 
+  // Heutiges Datum: Obergrenze fürs Datum und Startwert im Formular
   const today = new Date();
 
   // Startwerte: beim Bearbeiten aus der Ausgabe, sonst leer bzw. heute
@@ -123,6 +124,7 @@ export default function NewExpenseScreen({ navigation, route }) {
     }
   }
 
+  // «Speichern» wurde getippt: Ausgabe in die Datenbank schreiben und das Modal schliessen
   async function handleSave() {
     // Sicherheitshalber: nie speichern, wenn etwas ungültig ist oder schon gespeichert wird
     if (!isValid || saving) return;
@@ -380,7 +382,9 @@ function createStyles(colors) {
       flex: 1,
       backgroundColor: colors.background,
     },
+    // Füllt den ganzen freien Platz
     flex: { flex: 1 },
+    // Kopfzeile in drei Spalten: Abbrechen | Titel | leer
     topBar: {
       minHeight: 56,
       flexDirection: 'row',
@@ -394,7 +398,9 @@ function createStyles(colors) {
       paddingHorizontal: 12,
       borderRadius: radius.control,
     },
+    // Gedrückt: «Abbrechen» wird kurz grau
     cancelPressed: { backgroundColor: colors.pressed },
+    // «Abbrechen» in Grün
     cancelText: {
       ...typography.bodyLg,
       color: colors.accent,
@@ -405,32 +411,38 @@ function createStyles(colors) {
       minWidth: 116,
       alignItems: 'flex-start',
     },
+    // Titel in der Mitte der Kopfzeile
     title: {
       ...typography.headlineSm,
       color: colors.text,
       flex: 1,
       textAlign: 'center',
     },
+    // Seitenränder des scrollbaren Inhalts
     content: {
       paddingHorizontal: spacing.screen,
       paddingBottom: spacing.lg,
     },
+    // Betragsbereich: alles mittig untereinander
     amountBlock: {
       alignItems: 'center',
       gap: spacing.sm,
       paddingVertical: spacing.lg,
     },
+    // Kleine Überschrift in Grossbuchstaben
     overline: {
       ...typography.labelSm,
       color: colors.textSecondary,
       textTransform: 'uppercase',
     },
+    // «CHF» und der Betrag stehen auf einer Grundlinie
     amountRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
       justifyContent: 'center',
       gap: spacing.sm,
     },
+    // Das Wort «CHF» vor dem Betrag
     currency: {
       ...typography.bodyLg,
       color: colors.textSecondary,
@@ -446,6 +458,7 @@ function createStyles(colors) {
     },
     // Rote Linie zusätzlich zur Meldung (nie Farbe allein)
     amountInputError: { borderBottomColor: colors.danger },
+    // «Kategorie» links, Fehlermeldung rechts
     labelRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -453,21 +466,26 @@ function createStyles(colors) {
       gap: spacing.sm,
       marginBottom: spacing.sm,
     },
+    // Beschriftung über einer Gruppe
     label: {
       ...typography.labelMd,
       color: colors.textSecondary,
     },
+    // Lange Fehlertexte brechen um
     labelError: { flexShrink: 1 },
+    // Die Fehlermeldung rückt näher an das Feld darüber
     errorUnderField: {
       marginTop: -spacing.sm,
       marginBottom: spacing.md,
     },
+    // Kategorie-Chips: mehrere pro Zeile, sie brechen in die nächste Zeile um
     chips: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
       marginBottom: spacing.lg,
     },
+    // Eingabefeld: Rahmen, weisse Fläche, mindestens 64 pt hoch
     field: {
       minHeight: 64,
       justifyContent: 'center',
@@ -479,38 +497,47 @@ function createStyles(colors) {
       backgroundColor: colors.card,
       marginBottom: spacing.md,
     },
+    // Gedrückt: Feld wird kurz grau
     fieldPressed: { backgroundColor: colors.pressed },
+    // Bei einem Fehler: roter, dickerer Rahmen (zusätzlich zum Text)
     fieldError: { borderColor: colors.danger, borderWidth: 1.5 },
+    // Datumsfeld: Text links, Kalender-Icon rechts
     dateField: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    // Label links, Zeichenzähler rechts
     fieldLabelRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
+    // Kleine Beschriftung im Feld
     fieldLabel: {
       ...typography.labelSm,
       color: colors.textSecondary,
     },
+    // Zeichenzähler, z. B. «25/40»
     counter: {
       ...typography.labelSm,
       // textSecondary statt textTertiary: sonst unter 4.5:1 Kontrast
       color: colors.textSecondary,
       fontVariant: ['tabular-nums'],
     },
+    // Der getippte Text im Feld
     fieldInput: {
       ...typography.bodyLg,
       color: colors.text,
       minHeight: 32,
       padding: 0,
     },
+    // Der angezeigte Wert im Datumsfeld
     fieldValue: {
       ...typography.bodyLg,
       color: colors.text,
     },
+    // Rahmen um den Kalender
     pickerBox: {
       borderRadius: radius.control,
       borderWidth: 1,
@@ -520,8 +547,11 @@ function createStyles(colors) {
       marginBottom: spacing.md,
       gap: spacing.sm,
     },
+    // Abstand über dem Löschen-Button
     deleteButton: { marginTop: spacing.sm },
+    // Hinweis «Ausgabe nicht gefunden» steht in der Mitte
     notFound: { justifyContent: 'center', paddingHorizontal: spacing.screen },
+    // Speichern-Button unten in der Daumenzone
     footer: {
       paddingHorizontal: spacing.screen,
       paddingTop: spacing.sm,
