@@ -2,53 +2,63 @@
 
 Darian Germann und Alex Platret · 1. Oktober 2026
 
-Zielzeit: 8 Minuten 55 Sekunden, einschliesslich 2 Minuten Live-Demo. Die Folien enthalten diesen Text auch als PowerPoint-Notizen. Darian übernimmt Folien 1–4 und 9–10, Alex Folien 5–8. Die Aufteilung kann vor dem Üben angepasst werden.
+Zielzeit: 8 Minuten 55 Sekunden, einschliesslich 2 Minuten Live-Demo. Die Folien enthalten diesen Text auch als PowerPoint-Notizen. Darian übernimmt Folien 1–3, 6 und 9–10. Alex übernimmt Folien 4–5 und 7–8. Darian bedient die App während der Demo auf Folie 4. Die Aufteilung kann vor dem Üben angepasst werden.
 
-## 1. Spendly · 0:20
+## 1. Die Frage zum Einstieg · 0:35
 
-Darian: Wir zeigen Spendly, unsere Ausgaben-App für Lernende und Studierende. Sie sammelt kleine tägliche Ausgaben und zeigt, was vom Monatsbudget übrig bleibt. Wir vergleichen zuerst die Idee mit der fertigen App und zeigen danach die wichtigsten Funktionen direkt am Gerät.
+Darian: Wie entscheidet ihr, was ihr euch heute noch leisten könnt?
 
-## 2. Ausgaben im Alltag · 0:45
+[Die Frage wirken lassen. Etwa fünf Sekunden warten, dann ein bis zwei kurze Antworten aufnehmen. Keine privaten Beträge verlangen.]
 
-Darian: Unsere Zielgruppe sind Lernende und Studierende in der Schweiz. Wer den ersten Lohn erhält, bezahlt vieles mit Karte, TWINT oder Bargeld. Einzelne Beträge wirken klein. Zusammen belasten sie das Budget. Unsere Aufgabe war deshalb eine einfache, lokale App: Betrag und Kategorie erfassen, den verbleibenden Betrag sehen und einen Eintrag später korrigieren. Die 14 Franken 80 sind unser Beispiel aus dem Konzept. Es gibt kein Benutzerkonto und keine Bankverbindung. Ein kurzer Weg durch die App war ein Designziel. Die geplanten zehn Sekunden für eine Erfassung sind noch keine gemessene Leistung.
+Vielleicht schaut ihr auf den Kontostand. Vielleicht überschlagt ihr es im Kopf. Genau bei dieser Entscheidung beginnt unser Projekt. Wir wollten wissen: Wie können wir kleine Ausgaben so sichtbar machen, dass das restliche Monatsbudget verständlich bleibt?
 
-## 3. Konzept und Design · 0:50
+## 2. Kleine Ausgaben summieren sich · 0:40
 
-Darian: Links sehen wir das LB1-Mockup, rechts die aktuelle App. Der verfügbare Betrag bleibt im Vordergrund. Waldgrün, ein warmer Hintergrund und die Serifenschrift bei Beträgen bilden die Identität von Spendly. Übersicht, Verlauf und Einstellungen sind direkt erreichbar. Die Entwicklung verlief in Schritten: zuerst Oberfläche und Navigation, dann Speicherung und Biometrie, danach Fehlerfälle und Tests. Das zeigt auch die Historie im Repository. Für LB3 haben wir den Stand nochmals mit dem Konzept abgeglichen. Die App ergänzt native Bedienung und Dark Mode. Beide Bilder verwenden unterschiedliche Beispieldaten. Sie zeigen den Designvergleich, keinen Zahlenvergleich.
+Darian: Ein Kaffee für vier Franken fünfzig. Ein Mittagessen für zwölf Franken achtzig. Ein Musikabo für dreizehn Franken fünfundneunzig. Jede Zahlung ist für sich überschaubar. Zusammen sind es bereits einunddreissig Franken fünfundzwanzig. Das ist ein Beispiel, keine Statistik über unsere Zielgruppe. Gerade beim ersten eigenen Lohn oder einem festen Monatsbudget hilft es, diese Beträge zusammen zu sehen. Unsere Aufgabe aus LB1 war deshalb klar: eine einfache App für Lernende und Studierende, die Ausgaben in Franken erfasst und das verbleibende Budget zeigt.
 
-## 4. Live-Demo · 2:00
+## 3. Spendly · 0:45
 
-Darian zeigt die App, Alex erklärt kurz die Ergebnisse.
+Darian: Das ist Spendly. Auf der Übersicht steht die Frage aus dem Einstieg jetzt als konkrete Zahl: Was bleibt für heute? Im gezeigten Beispiel sind es fünfundzwanzig Franken vierzehn. Spendly verteilt das restliche Monatsbudget auf die verbleibenden Kalendertage, einschliesslich heute. Diese Zahl ist eine Orientierung und reagiert auf neue Ausgaben. Betrag und Kategorie reichen für einen Eintrag. Im Verlauf könnt ihr eine Ausgabe wiederfinden und korrigieren. Ein eigenes Budget pro Monat hält ältere Werte getrennt. Für den Einstieg braucht es kein Konto und keine Verbindung zu einer Bank. Die Daten liegen auf dem Gerät. Wir zeigen euch jetzt, wie sich das im Alltag anfühlt.
 
-0:00–0:15: App entsperren. Face ID nur zeigen, wenn der Test am Präsentationsgerät erfolgreich war. Sonst den eingerichteten App-Code verwenden.
-0:15–0:40: Neue Ausgabe erfassen: CHF 14.80, Kategorie Essen & Trinken, Beschreibung «Mittagessen», heutiges Datum. Speichern.
-0:40–0:55: Auf der Übersicht zeigen, dass Restbudget und Tagesbetrag sinken. Der Tagesbetrag verteilt das restliche Budget auf die restlichen Kalendertage inklusive heute.
-0:55–1:15: Im Verlauf «Mittagessen» suchen. Den Betrag auf CHF 12.80 ändern und speichern.
-1:15–1:35: Den Eintrag löschen und mit «Rückgängig» wiederherstellen.
-1:35–2:00: App vollständig schliessen und neu öffnen. Erneut entsperren und denselben Eintrag im Verlauf zeigen. So wird die lokale Speicherung sichtbar.
+## 4. Spendly im Alltag · 2:00
 
-Falls die Vorführung stockt: nach spätestens 15 Sekunden auf die mitgelieferte Aufnahme wechseln. Keine ungetestete Biometrie als erfolgreiche Demonstration ankündigen. Beispieldaten vor dem Vortrag einmal vorbereiten, nach dem Durchlauf wiederherstellen.
+Alex erklärt, Darian bedient die App. Bei der Aufnahme erklären beide die sichtbaren Schritte.
 
-## 5. Biometrische App-Sperre · 0:55
+Alex: Stellt euch vor, ihr kommt gerade vom Mittagessen. Wir erfassen jetzt genau diese Ausgabe.
 
-Alex: Die App-Sperre ist unser Smartphone-Feature. Anschaulich ist das Betriebssystem der Türsteher. Spendly fragt, ob die Person das Gerät entsperren darf. Das Gerät prüft Gesicht oder Fingerabdruck, und die App erhält Erfolg oder einen Fehler. Spendly bekommt kein Foto und keinen Fingerabdruck. Wer Biometrie nicht verwenden kann, nutzt einen eigenen sechsstelligen Code. Dessen Prüfwert liegt zusammen mit einem zufälligen Salz in SecureStore. Nach fünf falschen Versuchen folgen 30 Sekunden Wartezeit. Weitere Fehler verlängern die Wartezeit bis auf fünf Minuten. Ein Neustart setzt diese Sperre nicht zurück. Die App-Sperre schützt den Zugang innerhalb der App. Die SQLite-Datei ist dadurch nicht zusätzlich verschlüsselt. Der native Systemdialog und die erfolgreiche Erkennung wurden im Simulator geprüft. Das physische iPhone war für Xcode nicht erreichbar. Ein echter Gesichtsscan ist deshalb noch nicht nachgewiesen.
+0:00–0:15: Spendly entsperren. Den Demo-PIN 111111 verwenden. Face ID nur als Live-Scan zeigen, wenn es am Präsentationsgerät erfolgreich geprüft wurde.
+0:15–0:40: CHF 14.80, Essen & Trinken, «Mittagessen», heutiges Datum eingeben und speichern.
+0:40–0:55: Alex: Der Eintrag ist gespeichert. Gleichzeitig verändert sich die Tagesorientierung. Wir sehen direkt, was vom Monatsbudget bleibt.
+0:55–1:15: Im Verlauf «Mittagessen» suchen. CHF 14.80 auf CHF 12.80 ändern und speichern.
+1:15–1:35: Den Eintrag löschen und innerhalb der fünf Sekunden «Rückgängig» wählen.
+1:35–2:00: App vollständig beenden und neu öffnen. Mit PIN 111111 entsperren und den erhaltenen Eintrag zeigen. Alex: Die Ausgabe bleibt auch nach einem Neustart erhalten.
 
-## 6. Der Weg einer Ausgabe · 0:55
+Wenn die Live-Demo nach 15 Sekunden nicht läuft, auf das beigefügte Video wechseln. Die Aufnahme dauert 2:06 und hat keinen Ton. Mit Video verlängert sich die Zielzeit von 8:55 auf etwa 9:01. Vor einer neuen Live-Demo den Beispieldatensatz prüfen, damit nicht bereits ein zweiter identischer Mittagessen-Eintrag besteht.
 
-Alex: Die App trennt Bedienung, Berechnungen und Speicherung. Das Formular prüft zuerst den Betrag und die übrigen Felder. Nur gültige Eingaben gehen an den gemeinsamen DataContext. Dieser ruft die Speicherfunktionen auf. In SQLite steht jede Ausgabe als Datensatz mit ID, Betrag, Kategorie, Beschreibung und Datum. Geld speichern wir als ganze Rappen. 14 Franken 80 sind die ganze Zahl 1480. Das verhindert typische Ungenauigkeiten mit Dezimalzahlen. Danach aktualisiert der Context die Daten, und die Übersicht berechnet das Budget neu. Reine Funktionen lassen sich unabhängig von der Oberfläche testen. Kommentare erklären etwa die Rappenrechnung und gebundene SQL-Parameter.
+## 5. Deine Ausgaben bleiben bei dir · 0:55
 
-## 7. Konzept und Umsetzung · 0:50
+Alex: Ausgaben können persönlich sein. Spendly speichert sie lokal, ohne Konto und ohne eigenen Server. Die App-Sperre nutzt eine Funktion des Smartphones. Stellt euch das Betriebssystem als Türsteher vor: Spendly fragt, ob die Person das Gerät entsperren darf. Das Gerät prüft Gesicht oder Fingerabdruck. Die App erhält nur das Ergebnis, kein Foto und keinen Fingerabdruck. Als Alternative gibt es einen eigenen sechsstelligen Code. Nach fünf falschen Versuchen wartet die App dreissig Sekunden. Weitere Fehler verlängern diese Zeit, und ein Neustart setzt sie nicht zurück. Die Grenze ist klar: Die App-Sperre verschlüsselt die SQLite-Datei nicht zusätzlich. Der native Face-ID-Dialog funktioniert im Simulator. Ein echter Scan bleibt offen, weil Xcode unser physisches iPhone nicht erreichen konnte.
 
-Alex: Das finale Konzept war unsere Ausgangsbasis. Die lokale SQLite-Datenbank und ganze Rappen entsprechen bereits der Planung aus LB1. Monatsbudgets bleiben getrennt. Ein Standardbudget gilt für neue Monate. Auch die fünf Sekunden lange Löschfrist liegt dauerhaft in SQLite. Dark Mode erweitert den Mindestumfang. Eine Abweichung bleibt beim Code-Prüfwert: Die App nutzt SHA-256 mit Salt und SecureStore, keine spezielle langsame Passwortableitung. Das ist bewusst als Vereinfachung dokumentiert. Zusätzliche Funktionen wie Cloud-Synchronisierung oder Bankimport bleiben ausserhalb des Projekts. Der genaue Vergleich und die Abweichungen stehen in der technischen Dokumentation.
+## 6. Vom Entwurf zur nutzbaren App · 0:45
 
-## 8. Qualität und Tests · 0:45
+Darian: Rechts läuft die App, links steht der ursprüngliche Entwurf. Der Betrag ist in beiden der Mittelpunkt. Die Kategorie ist direkt erreichbar. Grün, der warme Hintergrund und die Schrift bei den Beträgen bleiben Teil des Designs. Wir haben zuerst Oberfläche und Navigation umgesetzt. Danach kamen Speicherung und Gerätesperre. Anschliessend haben wir Fehlerfälle und Tests ergänzt. Für LB3 verglichen wir den Code nochmals mit dem Konzept. Getrennte Monatsbudgets und dauerhafte Fristen haben wir vervollständigt. Dark Mode erweitert den geplanten Umfang. Dabei war eine Erkenntnis entscheidend: Die App braucht auch bei einer falschen Eingabe oder einer abgebrochenen Aktion einen klaren Zustand.
 
-Alex: Der aktuelle Prüflauf umfasst 91 bestandene automatisierte Tests. Neun Testsuiten prüfen unter anderem Berechnungen, Validierung, Code-Sperren und die SQLite-Speicherung. Die Datenbanktests nutzen eine echte SQLite-Engine. Zwei Tests prüfen den tatsächlichen Ablauf bei vergessenem Code mit aktivierter und deaktivierter Biometrie. ESLint ist ebenfalls ohne Fehler durchgelaufen. Zusätzlich prüfen wir die App als Ablauf: erstellen, verändern, löschen, zurückholen und nach einem Neustart wiederfinden. Der vollständige Ablauf funktionierte im eigenen iOS-Release-Build im Simulator, auch nach dem Stoppen des Entwicklungsservers. Historische Budgets und dunkle Darstellung wurden zusätzlich geprüft. Der native Face-ID-Systemdialog konnte mit einer simulierten passenden Erkennung entsperren. Der physische Gesichtsscan bleibt offen. Ein Unit-Test beweist keinen erfolgreichen Face-ID-Vorgang. Deshalb unterscheiden wir diese Nachweise. Einen Nutzertest mit der Zielgruppe und eine gemessene Erfassungszeit haben wir noch nicht durchgeführt.
+## 7. Die Technik hinter Spendly · 0:50
 
-## 9. Herausforderungen · 0:50
+Alex: Hinter dem kurzen Ablauf steckt eine getrennte Struktur. Das Formular prüft die Eingabe. Der gemeinsame DataContext führt die Aktion aus. SQLite speichert sie, danach aktualisieren sich die Ansichten. Die Methoden und Kommentare erklären diese Aufgaben im Code. Geld liegt als ganze Rappen in der Datenbank. Aus vierzehn Franken achtzig wird die Zahl eintausendvierhundertachtzig. Beim Monatsbudget behalten wir für jeden Monat einen eigenen Wert. Beim Löschen speichern wir die fünf Sekunden lange Frist, damit ein Neustart sie nicht verändert. Beides entspricht dem Konzept. Eine Abweichung bleibt beim Code-Prüfwert: SHA-256 mit zufälligem Salt in SecureStore ist einfacher als die geplante langsame Passwortableitung. Diese Grenze haben wir dokumentiert.
 
-Darian: Zwei Stellen zeigen, warum eine fertige App mehr braucht als den normalen Erfolgsfall. Ein einzelner globaler Budgetwert würde alte Monate beim Ändern verfälschen. Deshalb speichert die App Monatswerte getrennt und hält das Standardbudget zusätzlich fest. Auch ein Neustart darf die Sperrzeit nach falschen Codes nicht zurücksetzen. Dafür speichert SecureStore die Fehlversuche und den Sperrzeitpunkt. Beim Schliessen eines veränderten Formulars fragt die App vor dem Verwerfen nach. Die Folgerung ist für uns technisch klar: Jede wichtige Aktion braucht einen definierten Zustand vor der Änderung, ein Ergebnis bei Erfolg und eine verständliche Reaktion bei einem Fehler. Sonst können Oberfläche und gespeicherte Daten auseinanderlaufen.
+## 8. Der Kern funktioniert · 0:45
 
-## 10. Rückblick und Ausblick · 0:45
+Alex: Wir können den Kern heute zeigen. Einundneunzig automatisierte Tests in neun Suiten bestehen. Sie prüfen Berechnungen, Eingaben, PIN-Sperren und die Speicherung. Die SQLite-Regressionen führen echtes SQL aus. ESLint meldet keine Fehler. Zusätzlich haben wir den vollständigen Ablauf im eigenen iOS-Release-Build geprüft: erfassen, korrigieren, löschen, zurückholen und nach einem vollständigen Neustart wiederfinden. Dabei war der Entwicklungsserver gestoppt. Auch alte Monatsbudgets und Dark Mode wurden geprüft. Das ist technischer Nachweis. Ob Lernende Spendly täglich nutzen und die Tagesorientierung verstehen, müssen wir als Nächstes mit ihnen testen. Ein erfolgreicher Simulator-Dialog ersetzt auch keinen echten Gesichtsscan.
 
-Darian: Spendly setzt die Kernidee aus LB1 um: tägliche Ausgaben erfassen und das verfügbare Monatsbudget verständlich zeigen. Die wichtigste technische Lehre ist, Fehlerfälle früher genauso konkret zu planen wie den normalen Ablauf. Dazu gehören falsche Codes, abgebrochene Formulare und ein Neustart während einer Aktion. Als Nächstes würden wir die App mit Lernenden testen. Verstehen sie den Tagesbetrag? Finden sie die Korrektur eines Eintrags? Und gelingt die Erfassung tatsächlich in der geplanten kurzen Zeit? Erst mit diesen Beobachtungen lässt sich die Bedienung gezielt weiterentwickeln. Damit sind wir am Ende und beantworten gerne Fragen.
+## 9. Rückblick und Ausblick · 0:55
+
+Darian: Unser Rückblick ist konkret: Ein Monatsbudget braucht eine feste Zuordnung zum Monat. Sonst verändert ein neuer Wert auch die Vergangenheit. Auch die Rückgängig-Frist und die PIN-Sperre müssen einen Neustart überstehen. Das waren Herausforderungen, für die wir dauerhafte Zustände speichern mussten. Beim nächsten Projekt würden wir solche Fehlerfälle früher im Entwurf planen. Im Ausblick könnten wir Spendly um einen CSV-Export für Ausgaben oder Statistiken nach Kategorien erweitern. Diese Funktionen sind Ideen für spätere Versionen und noch nicht umgesetzt. Zuerst würden wir mit Lernenden prüfen, ob sie die Tagesorientierung verstehen und welche Erweiterung ihnen hilft. Die offenen Geräte- und Barrierefreiheitstests bleiben ebenfalls wichtig.
+
+## 10. Spendly ausprobieren · 0:45
+
+Darian: Am Anfang haben wir gefragt, wie ihr entscheidet, was ihr euch heute noch leisten könnt. Spendly macht eure erfassten Ausgaben und das restliche Monatsbudget sichtbar. Wir haben aus dem Entwurf eine funktionierende App gemacht und die wichtigsten Abläufe geprüft. Jetzt seid ihr dran: Wollt ihr Spendly ausprobieren? Welche Funktion würdet ihr euch für euren Alltag wünschen? Eure Ideen würden uns helfen, die nächste Version gezielt zu verbessern.
+
+[Die Einladung kurz wirken lassen und in die Fragerunde überleiten.]
+
+Vielen Dank. Wir beantworten gerne eure Fragen zur Idee, zur App und zur technischen Umsetzung.
