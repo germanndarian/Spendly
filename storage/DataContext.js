@@ -38,8 +38,8 @@ export function DataProvider({ children }) {
   // Sie steht hier, damit sie auch nach dem Schliessen eines Modals sichtbar ist.
   const [snackbar, setSnackbar] = useState(null);
 
-  // Alles neu aus der Datenbank lesen (ohne Ladeanzeige).
-  const refresh = useCallback(async () => {
+  // Liest alles aus der Datenbank, ändert aber noch nichts am State.
+  const fetchAll = useCallback(async () => {
     const today = new Date();
     const monthPrefix = toISODate(today).slice(0, 7); // '2026-09'
     const daysInMonth = getDaysInMonth(today);
@@ -52,30 +52,47 @@ export function DataProvider({ children }) {
       getMonthTotalRappen(monthPrefix),
       getDailyTotalsRappen(monthPrefix, daysInMonth),
     ]);
+    return { loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals };
+  }, []);
 
-    // Ergebnisse in den State schreiben -> die Screens zeigen die neuen Zahlen
+  // Schreibt die gelesenen Daten in den State -> die Screens zeigen die neuen Zahlen
+  const applyData = useCallback(({ loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals }) => {
     setExpenses(loadedExpenses);
     setSettings(loadedSettings);
     setSummary({ monthTotalRappen, dailyTotals });
   }, []);
 
-  // Erster Start und "Erneut versuchen" nach einem Fehler
-  const load = useCallback(async () => {
-    setStatus('loading');
-    try {
-      await refresh();
-      setStatus('ready');
-    } catch (error) {
-      console.warn('Daten konnten nicht geladen werden:', error);
-      setStatus('error');
-    }
-  }, [refresh]);
+  // Alles neu aus der Datenbank lesen (ohne Ladeanzeige).
+  const refresh = useCallback(async () => {
+    applyData(await fetchAll());
+  }, [fetchAll, applyData]);
 
-  // Beim Start der App einmal alles laden. [load] heisst: nur neu ausführen,
-  // wenn sich die Funktion load ändert (passiert nicht).
+  // Zählt, wie oft «Erneut versuchen» getippt wurde. Ändert sich die Zahl,
+  // läuft der Effekt unten noch einmal und lädt alles neu.
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  // Beim Start der App (und nach jedem «Erneut versuchen») alles laden.
+  // Der Status steht beim Start schon auf 'loading'. Gesetzt wird er erst,
+  // wenn die Datenbank geantwortet hat (in .then bzw. .catch):
+  // 'ready' bei Erfolg, 'error' wenn die Datenbank nicht antwortet.
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchAll()
+      .then((data) => {
+        applyData(data);
+        setStatus('ready');
+      })
+      .catch((error) => {
+        console.warn('Daten konnten nicht geladen werden:', error);
+        setStatus('error');
+      });
+    // loadAttempt steht hier nur, damit der Effekt bei jedem neuen Versuch läuft
+  }, [fetchAll, applyData, loadAttempt]);
+
+  // «Erneut versuchen» nach einem Fehler: Ladeanzeige zeigen und neu laden
+  const retry = useCallback(() => {
+    setStatus('loading');
+    setLoadAttempt((attempt) => attempt + 1);
+  }, []);
 
   // Wer die App über Nacht offen lässt, soll am nächsten Morgen die Zahlen
   // vom neuen Tag (bzw. neuen Monat) sehen. Darum beim Zurückkommen aus dem
@@ -185,7 +202,7 @@ export function DataProvider({ children }) {
   const value = useMemo(
     () => ({
       status,
-      retry: load,
+      retry,
       expenses,
       settings,
       // Abkürzungen, damit die Screens nicht so tief suchen müssen
@@ -204,7 +221,7 @@ export function DataProvider({ children }) {
     }),
     [
       status,
-      load,
+      retry,
       expenses,
       settings,
       summary,
