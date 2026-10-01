@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import Card from '../components/Card';
+import EmptyState from '../components/EmptyState';
 import ExpenseRow from '../components/ExpenseRow';
 import Fab from '../components/Fab';
 import Icon from '../components/Icon';
@@ -41,6 +42,8 @@ export default function OverviewScreen({ navigation }) {
   // Alle Kennzahlen auf einmal: Heute noch frei, überschritten, Fortschritt …
   // (siehe utils/budget.js)
   const status = getBudgetStatus(budgetRappen, spentRappen, today);
+  // Ist für diesen Monat noch kein Budget festgelegt? Dann zeigen wir statt der Zahlen eine Aufforderung.
+  const hasBudget = budgetRappen !== null;
   // Die Liste kommt schon sortiert aus der Datenbank – wir zeigen die letzten drei
   const recentExpenses = sortNewestFirst(expenses).slice(0, 3);
   // 0.755 -> 76 (Prozent für die Anzeige)
@@ -72,6 +75,8 @@ export default function OverviewScreen({ navigation }) {
 
         {/* Hauptkarte: Heute noch frei */}
         <Card style={styles.section}>
+          {/* Mit Budget: «Heute noch frei» und Fortschritt. Ohne Budget: Hinweis weiter unten. */}
+          {hasBudget ? <>
           <View style={styles.heroHeader}>
             <Text style={styles.overline}>Heute noch frei</Text>
             {/* && heisst: nur anzeigen, wenn die Bedingung stimmt */}
@@ -115,16 +120,23 @@ export default function OverviewScreen({ navigation }) {
             </View>
             <ProgressBar progress={status.progress} />
           </View>
+          </> : <EmptyState
+            icon="credit-card"
+            title="Budget festlegen"
+            description="Lege dein Monatsbudget fest, damit Spendly dein Tagesbudget berechnen kann."
+            actionLabel="Zu den Einstellungen"
+            onAction={() => navigation.navigate('Settings')}
+          />}
         </Card>
 
         {/* Monatsstreifen */}
-        <View style={styles.section}>
+        {hasBudget && <View style={styles.section}>
           <MonthStrip
             today={today}
             dailyTotals={dailyTotals}
             dailyBudgetRappen={status.dailyBudgetRappen}
           />
-        </View>
+        </View>}
 
         {/* Letzte 3 Ausgaben – oder der Hinweis für den ersten Start */}
         {hasExpenses ? (
@@ -159,7 +171,7 @@ export default function OverviewScreen({ navigation }) {
             </View>
 
             {/* Reserve im Monat (Mockup "Sparziel") – nur solange das Budget reicht */}
-            {!status.isOverBudget && (
+            {hasBudget && !status.isOverBudget && (
               <Card style={[styles.infoCard, styles.savingsCard]}>
                 <View style={[styles.infoIcon, styles.savingsIcon]}>
                   <Icon family="mci" name="piggy-bank-outline" size={22} color={colors.accent} />

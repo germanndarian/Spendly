@@ -5,7 +5,7 @@ import { getDatabase } from './db';
 
 // Schlüssel und Standardwerte an einem Ort.
 export const DEFAULT_SETTINGS = {
-  budgetRappen: 80000, // CHF 800.00
+  defaultBudgetRappen: null, // optionale Vorgabe für neue Monate
   biometricEnabled: true, // Face ID / Fingerabdruck verwenden
   autoLockMinutes: 1, // Sperrzeit im Hintergrund in Minuten, null = nie
   appearance: 'system', // 'light' | 'dark' | 'system'
@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS = {
 
 // Wie der gespeicherte Text wieder gelesen wird.
 const PARSERS = {
-  budgetRappen: (value) => Number(value),
+  defaultBudgetRappen: (value) => (value === '' ? null : Number(value)),
   biometricEnabled: (value) => value === 'true',
   autoLockMinutes: (value) => (value === '' ? null : Number(value)),
   appearance: (value) => value,

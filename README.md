@@ -10,7 +10,7 @@
   <img alt="React Native 0.86" src="https://img.shields.io/badge/React%20Native-0.86-1F5A45?style=flat-square&logo=react&logoColor=white&labelColor=15171A">
   <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-ohne%20TypeScript-1F5A45?style=flat-square&logo=javascript&logoColor=white&labelColor=15171A">
   <img alt="SQLite" src="https://img.shields.io/badge/SQLite-lokal%20auf%20dem%20Ger%C3%A4t-1F5A45?style=flat-square&logo=sqlite&logoColor=white&labelColor=15171A">
-  <img alt="Tests" src="https://img.shields.io/badge/Tests-65%20bestanden-1F5A45?style=flat-square&logo=jest&logoColor=white&labelColor=15171A">
+  <img alt="Tests" src="https://img.shields.io/badge/Tests-91%20bestanden-1F5A45?style=flat-square&logo=jest&logoColor=white&labelColor=15171A">
 </p>
 
 <p align="center">
@@ -30,6 +30,20 @@
 <p align="center">
   <sub>Entsperren&nbsp;&nbsp;·&nbsp;&nbsp;Übersicht&nbsp;&nbsp;·&nbsp;&nbsp;Neue Ausgabe&nbsp;&nbsp;·&nbsp;&nbsp;Verlauf&nbsp;&nbsp;·&nbsp;&nbsp;Einstellungen</sub>
 </p>
+
+<br>
+
+## LB3 · Abgabe vom 1. Oktober 2026
+
+Die fünf Bilder oben zeigen den eigenen iOS-Release-Build im Simulator. Das ursprüngliche LB1-Design bleibt im Ordner `design` erhalten.
+
+- [Präsentation als PDF](docs/lb3/Spendly_LB3_Praesentation.pdf) und [bearbeitbare PowerPoint-Datei](docs/lb3/Spendly_LB3_Praesentation.pptx)
+- [Technische Dokumentation mit Workflow und Konzeptvergleich](docs/lb3/Spendly_LB3_Technische_Dokumentation.pdf)
+- [Sprechertext](docs/lb3/Spendly_LB3_Sprechertext.md), [Präsentationsleitfaden](docs/lb3/Spendly_LB3_Praesentationsleitfaden.pdf) und [aktuelles Prüfprotokoll](docs/lb3/PRUEFPROTOKOLL.md)
+
+91 automatisierte Tests und ESLint bestehen. Der native Simulatorlauf bestätigt Erstellen, Bearbeiten, Löschen, Rückgängig und Neustart ohne Entwicklungsserver. Der Face-ID-Systemdialog wurde mit einer simulierten passenden Erkennung geprüft. Ein echter Scan auf dem physischen iPhone bleibt offen, da Xcode das Gerät nicht erreichen konnte.
+
+Für die eingerichteten Demo-Instanzen gilt **111111**. Neue Installationen verlangen einen selbst gewählten Code; der Demo-Code ist nicht im Programm fest eingebaut.
 
 <br>
 
@@ -81,7 +95,7 @@ Es gibt **zwei Wege**, Spendly zu starten. Beide verwenden denselben Code – de
 
 #### <img src="docs/readme/step-1.svg" width="28" height="28" align="top"> &nbsp;Projekt holen
 
-Du brauchst [Node.js](https://nodejs.org) (LTS-Version) und [Git](https://git-scm.com). Dann im Terminal:
+Du brauchst [Node.js](https://nodejs.org) (mindestens 22.13, für die SQLite-Integrationstests) und [Git](https://git-scm.com). Dann im Terminal:
 
 ```bash
 git clone https://github.com/germanndarian/Spendly.git
@@ -92,7 +106,7 @@ cd Spendly
 ```
 
 ```bash
-npm install
+npm ci
 ```
 
 #### <img src="docs/readme/step-2.svg" width="28" height="28" align="top"> &nbsp;Expo Go aufs Handy laden
@@ -157,7 +171,7 @@ cd Spendly
 ```
 
 ```bash
-npm install
+npm ci
 ```
 
 #### <img src="docs/readme/step-2.svg" width="28" height="28" align="top"> &nbsp;Xcode einrichten
@@ -275,7 +289,7 @@ Wenn Spendly nach Face ID fragt, wählst du **Features → Face ID → Matching 
 
 | | Was | Wo |
 | :-: | :-- | :-- |
-| 💰 | **Monatsbudget festlegen** (Standard: CHF 800.00) | Einstellungen → Monatsbudget |
+| 💰 | **Monatsbudget festlegen** (z. B. CHF 800.00; beim ersten Start noch leer) | Einstellungen → Monatsbudget |
 | ➕ | **Erste Ausgabe erfassen**: Betrag, Kategorie, fertig | grüner **+**-Knopf unten rechts |
 | 🧪 | **Demo-Daten laden**: rund 40 typische Ausgaben (Migros, SBB, Kino …) | Einstellungen → ganz unten *(nur im Entwicklungsmodus)* |
 | 🌙 | **Dunkles Design** | Einstellungen → Erscheinungsbild → Hell / Dunkel / System |
@@ -303,11 +317,11 @@ flowchart LR
 
 | Screen | Was man dort macht |
 | :-- | :-- |
-| 🔐 **Entsperren** | Face ID bzw. Fingerabdruck, eigener 6-stelliger Code als Ersatz. Nach 3 Fehlversuchen geht es automatisch mit dem Code weiter. Beim ersten Start wird der Code festgelegt. |
+| 🔐 **Entsperren** | Biometrie mit dem Namen des Gerätesensors, eigener 6-stelliger Code als Ersatz. Nach 3 fehlgeschlagenen Biometrie-Versuchen geht es mit dem Code weiter. Nach 5 falschen Codes beginnt eine dauerhafte gespeicherte Wartezeit (30 Sekunden, schrittweise bis 5 Minuten). Beim ersten Start wird der Code festgelegt. |
 | 📊 **Übersicht** | «Heute noch frei» (Tagesbudget), Fortschritt im Monat, Monatsstreifen mit einem Balken pro Tag (rot markiert: über dem Tagesbudget) und die letzten 3 Ausgaben. |
-| ✏️ **Neue Ausgabe** | Betrag, Kategorie, Beschreibung und Datum – mit Prüfung in Echtzeit. Dasselbe Formular dient zum Bearbeiten und Löschen. |
+| ✏️ **Neue Ausgabe** | Betrag, Kategorie, Beschreibung und Datum – mit Prüfung in Echtzeit. Dasselbe Formular dient zum Bearbeiten und Löschen. Ungespeicherte Änderungen benötigen beim Verlassen eine Bestätigung. |
 | 🕘 **Verlauf** | Alle Ausgaben nach Tag gruppiert, mit Suche und Kategorie-Filter. Nach links wischen löscht, «Rückgängig» holt die Ausgabe 5 Sekunden lang zurück. |
-| ⚙️ **Einstellungen** | Monatsbudget, Face ID an/aus, Sperrzeit, Code ändern, App sperren, Hell/Dunkel/System, alle Daten löschen. |
+| ⚙️ **Einstellungen** | Budget pro Monat, vergangene Monate und optionaler Standard für kommende Monate, Biometrie an/aus, Sperrzeit, Code ändern, App sperren, Hell/Dunkel/System, alle Daten löschen. |
 
 > [!TIP]
 > **Special Feature:** Biometrie mit `expo-local-authentication`. Die App bekommt vom Gerät nur *«erkannt»* oder *«nicht erkannt»* zurück – Gesichts- und Fingerabdruckdaten sieht sie nie.
@@ -343,7 +357,7 @@ flowchart LR
   </tr>
   <tr>
     <td><b>Tests</b></td>
-    <td>jest-expo – 5 Testdateien, 65 Tests für alle Hilfsfunktionen in <code>utils/</code></td>
+    <td>jest-expo – 9 Testdateien, 91 Tests: Hilfsfunktionen, echte SQLite-Operationen, PIN-Sperre, Biometrie und Wiederherstellungsdialog</td>
   </tr>
 </table>
 
@@ -369,12 +383,14 @@ Die Screens greifen **nie direkt** auf die Datenbank zu, sondern nur über `useD
 | Daten | Speicherort | Warum |
 | :-- | :-- | :-- |
 | Ausgaben | SQLite, Tabelle `expenses` (Index auf `date`) | Kern der App |
-| Budget, Face ID an/aus, Sperrzeit, Erscheinungsbild, letzte Kategorie | SQLite, Tabelle `settings` | Man soll nicht bei jedem Start neu einstellen müssen |
+| Monatsbudgets | SQLite, Tabelle `monthly_budgets` | Jeder Monat behält sein eigenes Budget |
+| Vorgabe für neue Monate, Biometrie an/aus, Sperrzeit, Erscheinungsbild, letzte Kategorie | SQLite, Tabelle `settings` | Einstellungen bleiben erhalten |
 | App-Code | `expo-secure-store` (`spendly_pin_hash`) | nur als gesalzener SHA-256-Hash, nie im Klartext |
 
 - 🪙 **Beträge in Rappen:** Alle Beträge sind ganze Zahlen (CHF 12.50 = `1250`). So entstehen keine Rundungsfehler wie bei `0.1 + 0.2`.
 - 🧮 **Summen in SQL:** Monatssumme und Tagessummen rechnet SQLite mit `SUM` und `GROUP BY` aus – nicht JavaScript.
 - 🏷️ **Schema-Version** in `PRAGMA user_version`, damit spätere Änderungen bestehende Daten nicht zerstören.
+- 🔐 **Grenze des Schutzes:** Die SQLite-Datenbank ist nicht zusätzlich verschlüsselt. Der gesalzene SHA-256-Code-Hash und die App-Sperre ersetzen keine Datenbankverschlüsselung.
 - 🚫 **Bewusst nicht gespeichert:** Gesichts- und Fingerabdruckdaten (die sieht die App nie) und der Entsperrt-Status – nach einem Neustart ist Spendly immer gesperrt.
 
 <br>
@@ -398,7 +414,7 @@ Warmes Off-White, Tinte und ein dunkles **Waldgrün** als einzige Akzentfarbe. R
 
 | Befehl | Was er macht |
 | :-- | :-- |
-| `npm test` | Unit-Tests der Hilfsfunktionen in `utils/` |
+| `npm test -- --runInBand` | 91 Tests: Funktionen, SQLite-Migration und Transaktionen, persistentes Undo, PIN-Sperre und Biometrie-Policy |
 | `npx expo lint` | prüft den Code-Stil (ESLint) |
 | `npx expo-doctor` | prüft Abhängigkeiten und Konfiguration |
 
@@ -484,7 +500,7 @@ npx expo run:ios --device
 <summary><b>Code vergessen?</b></summary>
 <br>
 
-Den Code kann niemand wiederherstellen – er ist nur als Hash gespeichert. Auf dem Sperrbildschirm führt **«Code vergessen?»** zum Löschen aller Daten, danach legst du einen neuen Code fest.
+Den bisherigen Code kann die App nicht anzeigen. Ist Biometrie in Spendly eingeschaltet und auf dem Gerät verfügbar, bestätigt **«Code vergessen?»** zuerst deine Identität. Danach kannst du einen neuen Code setzen; die Ausgaben bleiben erhalten. Bei ausgeschalteter oder nicht verfügbarer Biometrie bleibt nur ein ausdrücklich bestätigter vollständiger Daten-Reset.
 
 </details>
 
@@ -501,7 +517,7 @@ Es läuft schon ein Entwicklungs-Server, meistens in einem anderen Terminal-Fens
 ---
 
 <p align="center">
-  <sub>Entwickelt im <b>Modul 335 «Mobile-Applikation realisieren»</b> von zwei ICT-Lernenden · 2026</sub><br>
+  <sub>Entwickelt im <b>Modul 335 «Mobile-Applikation realisieren»</b> von Darian Germann und Alex Platret · 2026</sub><br>
   <sub>🌿 Alle Daten bleiben auf deinem Gerät.</sub>
 </p>
 

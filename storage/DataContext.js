@@ -8,16 +8,19 @@ import { toISODate } from '../utils/format';
 import {
   addExpense,
   addManyExpenses,
-  deleteAllExpenses,
   deleteExpense,
+  finishPendingDeletes,
   getDailyTotalsRappen,
   getMonthTotalRappen,
+  getPendingDelete,
   listExpenses,
   restoreExpense,
   updateExpense,
 } from './expenses';
-import { DEFAULT_SETTINGS, loadSettings, resetSettings, saveSetting } from './settings';
+import { DEFAULT_SETTINGS, loadSettings, saveSetting } from './settings';
 import { clearPin } from './pin';
+import { ensureMonthBudget, listMonthBudgets, saveMonthBudget } from './budgets';
+import { getDatabase } from './db';
 
 // Gemeinsamer Speicher für alle Daten (gleiches Prinzip wie ThemeContext)
 const DataContext = createContext(null);
@@ -33,7 +36,11 @@ export function DataProvider({ children }) {
   // Einstellungen (Budget, Face ID, Sperrzeit …), zuerst die Standardwerte
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   // Summen für die Übersicht – die rechnet SQLite direkt aus
-  const [summary, setSummary] = useState({ monthTotalRappen: 0, dailyTotals: [] });
+  const [summary, setSummary] = useState({ monthTotalRappen: 0, dailyTotals: [], budgetRappen: null, month: toISODate(new Date()).slice(0, 7) });
+  // Alle Monate mit Budget und Ausgaben (für den Budget-Dialog)
+  const [budgetHistory, setBudgetHistory] = useState([]);
+  // Die Ausgabe, die gerade noch zurückgeholt werden kann (oder null)
+  const [pendingDelete, setPendingDelete] = useState(null);
   // Kurze Rückmeldung am unteren Rand (z. B. nach dem Löschen).
   // Sie steht hier, damit sie auch nach dem Schliessen eines Modals sichtbar ist.
   const [snackbar, setSnackbar] = useState(null);
@@ -44,23 +51,58 @@ export function DataProvider({ children }) {
     const monthPrefix = toISODate(today).slice(0, 7); // '2026-09'
     const daysInMonth = getDaysInMonth(today);
 
-    // Promise.all startet alle vier Abfragen gleichzeitig und wartet,
+    // Abgelaufene Löschungen endgültig entfernen
+    await finishPendingDeletes();
+    const loadedSettings = await loadSettings();
+    // Budget dieses Monats (wird bei Bedarf aus der Vorgabe angelegt)
+    const budgetRappen = await ensureMonthBudget(monthPrefix, loadedSettings.defaultBudgetRappen);
+    // Promise.all startet die unabhängigen Abfragen gleichzeitig und wartet,
     // bis alle fertig sind. Das ist schneller als eine nach der anderen.
-    const [loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals] = await Promise.all([
+    const [loadedExpenses, monthTotalRappen, dailyTotals, history, pending] = await Promise.all([
       listExpenses(),
-      loadSettings(),
       getMonthTotalRappen(monthPrefix),
       getDailyTotalsRappen(monthPrefix, daysInMonth),
+      listMonthBudgets(),
+      getPendingDelete(),
     ]);
-    return { loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals };
+    return { loadedExpenses, loadedSettings, budgetRappen, monthPrefix, monthTotalRappen, dailyTotals, history, pending };
   }, []);
 
-  // Schreibt die gelesenen Daten in den State -> die Screens zeigen die neuen Zahlen
-  const applyData = useCallback(({ loadedExpenses, loadedSettings, monthTotalRappen, dailyTotals }) => {
-    setExpenses(loadedExpenses);
-    setSettings(loadedSettings);
-    setSummary({ monthTotalRappen, dailyTotals });
-  }, []);
+  // Schreibt die gelesenen Daten in den State -> die Screens zeigen die neuen Zahlen.
+  // Der Funktionsname (applyData) erlaubt, dass sich die Funktion unten selbst aufruft.
+  const applyData = useCallback(
+    function applyData(data) {
+      const { loadedExpenses, loadedSettings, budgetRappen, monthPrefix, monthTotalRappen, dailyTotals, history, pending } = data;
+      setExpenses(loadedExpenses);
+      setSettings(loadedSettings);
+      setSummary({ monthTotalRappen, dailyTotals, budgetRappen, month: monthPrefix });
+      setBudgetHistory(history);
+      setPendingDelete(pending);
+      // Läuft noch eine Löschfrist (auch nach einem Neustart), zeigen wir «Rückgängig» weiter an
+      if (pending) {
+        setSnackbar({
+          id: `undo-${pending.id}-${pending.deadline}`,
+          message: 'Ausgabe gelöscht',
+          icon: 'trash-2',
+          actionLabel: 'Rückgängig',
+          expiresAt: pending.deadline,
+          onAction: async () => {
+            try {
+              const restored = await restoreExpense(pending);
+              applyData(await fetchAll());
+              if (!restored) {
+                setSnackbar({ id: Date.now(), message: 'Die Rückgängig-Frist ist abgelaufen.', icon: 'info' });
+              }
+            } catch (error) {
+              console.warn('Ausgabe konnte nicht wiederhergestellt werden:', error);
+              Alert.alert('Nicht wiederhergestellt', 'Die Ausgabe konnte nicht zurückgeholt werden.');
+            }
+          },
+        });
+      }
+    },
+    [fetchAll]
+  );
 
   // Alles neu aus der Datenbank lesen (ohne Ladeanzeige).
   const refresh = useCallback(async () => {
@@ -101,7 +143,8 @@ export function DataProvider({ children }) {
     // Letzter bekannter Zustand der App ('active', 'background' …)
     let previousState = AppState.currentState;
     const subscription = AppState.addEventListener('change', (nextState) => {
-      if (previousState === 'background' && nextState === 'active') {
+      // Die App ist wieder offen (auch nach 'inactive'): neu lesen
+      if (previousState !== 'active' && nextState === 'active') {
         refresh().catch((error) => {
           console.warn('Daten konnten nicht aktualisiert werden:', error);
         });
@@ -119,8 +162,6 @@ export function DataProvider({ children }) {
   const createExpense = useCallback(
     async (input) => {
       const expense = await addExpense(input);
-      // Kategorie merken, damit sie beim nächsten Mal vorausgewählt ist
-      await saveSetting('lastCategory', input.category);
       await refresh();
       return expense;
     },
@@ -131,7 +172,6 @@ export function DataProvider({ children }) {
   const editExpense = useCallback(
     async (id, input) => {
       await updateExpense(id, input);
-      await saveSetting('lastCategory', input.category);
       await refresh();
     },
     [refresh]
@@ -142,33 +182,35 @@ export function DataProvider({ children }) {
   const showSnackbar = useCallback((config) => setSnackbar({ ...config, id: Date.now() }), []);
   const hideSnackbar = useCallback(() => setSnackbar(null), []);
 
-  // Löschen mit Sicherheitsnetz: Die gelöschte Ausgabe bleibt hier im
-  // Speicher und lässt sich über die Snackbar 5 Sekunden lang zurückholen.
+  // Löschen mit Sicherheitsnetz: Die Zeile bleibt bis zur Frist in SQLite
+  // und lässt sich über die Snackbar 5 Sekunden lang zurückholen.
   // Wird im Verlauf (Wischen) und im Bearbeiten-Modal verwendet.
   const removeExpense = useCallback(
     async (expense) => {
       await deleteExpense(expense.id);
       await refresh();
-      showSnackbar({
-        message: 'Ausgabe gelöscht',
-        icon: 'trash-2',
-        actionLabel: 'Rückgängig',
-        onAction: async () => {
-          try {
-            // Mit gleicher id zurückschreiben – als wäre nichts passiert
-            await restoreExpense(expense);
-            await refresh();
-          } catch (error) {
-            console.warn('Ausgabe konnte nicht wiederhergestellt werden:', error);
-            Alert.alert('Nicht wiederhergestellt', 'Die Ausgabe konnte nicht zurückgeholt werden.');
-          }
-        },
-      });
     },
-    [refresh, showSnackbar]
+    [refresh]
   );
 
-  // Eine Einstellung speichern, z. B. updateSetting('budgetRappen', 90000)
+  useEffect(() => {
+    // Ist eine Löschung offen, wird sie nach Ablauf der Frist endgültig gemacht
+    if (!pendingDelete) return undefined;
+    // Wie lange dauert es noch bis zur Frist?
+    const remaining = Math.max(0, pendingDelete.deadline - Date.now());
+    const timer = setTimeout(() => {
+      finishPendingDeletes().catch((error) => console.warn('Löschen wird beim nächsten Start abgeschlossen:', error));
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [pendingDelete]);
+
+  // Budget eines Monats speichern (Dialog in den Einstellungen)
+  const updateMonthBudget = useCallback(async (month, amountRappen, useForFuture) => {
+    await saveMonthBudget(month, amountRappen, useForFuture);
+    await refresh();
+  }, [refresh]);
+
+  // Eine Einstellung speichern, z. B. updateSetting('appearance', 'dark')
   const updateSetting = useCallback(
     async (key, value) => {
       await saveSetting(key, value);
@@ -182,8 +224,14 @@ export function DataProvider({ children }) {
   const deleteAllData = useCallback(async () => {
     // Ein offenes "Rückgängig" würde sonst eine Ausgabe zurückholen
     setSnackbar(null);
-    await deleteAllExpenses();
-    await resetSettings();
+    setPendingDelete(null);
+    // Alle drei Tabellen in einer Transaktion leeren: ganz oder gar nicht
+    const db = await getDatabase();
+    await db.withExclusiveTransactionAsync(async (transaction) => {
+      await transaction.runAsync('DELETE FROM expenses');
+      await transaction.runAsync('DELETE FROM monthly_budgets');
+      await transaction.runAsync('DELETE FROM settings');
+    });
     await clearPin();
     await refresh();
   }, [refresh]);
@@ -206,7 +254,10 @@ export function DataProvider({ children }) {
       expenses,
       settings,
       // Abkürzungen, damit die Screens nicht so tief suchen müssen
-      budgetRappen: settings.budgetRappen,
+      budgetRappen: summary.budgetRappen,
+      currentMonth: summary.month,
+      budgetHistory,
+      updateMonthBudget,
       spentRappen: summary.monthTotalRappen,
       dailyTotals: summary.dailyTotals,
       createExpense,
@@ -225,6 +276,8 @@ export function DataProvider({ children }) {
       expenses,
       settings,
       summary,
+      budgetHistory,
+      updateMonthBudget,
       createExpense,
       editExpense,
       removeExpense,

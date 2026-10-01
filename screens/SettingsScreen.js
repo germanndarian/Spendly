@@ -9,17 +9,16 @@ import { spacing } from '../theme/spacing';
 import ChangeCodeModal from '../components/ChangeCodeModal';
 import Chip from '../components/Chip';
 import ChoiceModal from '../components/ChoiceModal';
-import PromptModal from '../components/PromptModal';
+import BudgetModal from '../components/BudgetModal';
 import ScreenHeader from '../components/ScreenHeader';
 import SettingsRow from '../components/SettingsRow';
 import SettingsSection from '../components/SettingsSection';
 import { lockApp } from '../navigation/navigationRef';
 import { useData } from '../storage/DataContext';
 import { createDemoExpenses } from '../data/demoData';
-import { formatCHF, parseAmountToRappen } from '../utils/format';
-import { validateBudget } from '../utils/validation';
+import { formatCHF, formatMonthYear, parseISODate } from '../utils/format';
 import { AUTO_LOCK_OPTIONS, getAutoLockLabel } from '../utils/autoLock';
-import { BIOMETRIC_NAME, checkBiometrics, getUnavailableText, UNLOCK_LABEL } from '../utils/biometrics';
+import { checkBiometrics, getUnavailableText } from '../utils/biometrics';
 
 // Auswahl für das Erscheinungsbild
 const APPEARANCE_OPTIONS = [
@@ -34,7 +33,7 @@ export default function SettingsScreen() {
   const { colors, mode, setMode } = useTheme();
   // Styles mit diesen Farben bauen. useMemo: nur neu, wenn sich die Farben ändern.
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { expenses, settings, budgetRappen, updateSetting, deleteAllData, loadDemoData, showSnackbar } =
+  const { expenses, settings, budgetRappen, currentMonth, budgetHistory, updateMonthBudget, updateSetting, deleteAllData, loadDemoData, showSnackbar } =
     useData();
 
   // Welcher Dialog ist gerade offen? (true = sichtbar)
@@ -42,7 +41,10 @@ export default function SettingsScreen() {
   const [codeModalVisible, setCodeModalVisible] = useState(false);
   const [lockModalVisible, setLockModalVisible] = useState(false);
   // Steht Face ID / Fingerabdruck auf diesem Gerät zur Verfügung?
-  const [biometry, setBiometry] = useState({ available: true, reason: null });
+  const [biometry, setBiometry] = useState({ available: false, reason: null });
+  // Name und Beschriftung kommen vom Sensor des Geräts
+  const biometricName = biometry.name ?? 'Biometrie';
+  const unlockLabel = biometry.unlockLabel ?? 'Mit Biometrie entsperren';
 
   // Beim Öffnen einmal prüfen, ob Face ID geht. [] heisst: nur ein Mal.
   useEffect(() => {
@@ -62,12 +64,6 @@ export default function SettingsScreen() {
       console.warn('Einstellung konnte nicht gespeichert werden:', error);
       Alert.alert('Nicht gespeichert', 'Die Einstellung konnte nicht gespeichert werden.');
     });
-  }
-
-  // Budget aus dem Dialog speichern: Text '800.00' -> 80000 Rappen
-  function handleSaveBudget(text) {
-    changeSetting('budgetRappen', parseAmountToRappen(text));
-    setBudgetModalVisible(false);
   }
 
   // «Alle Daten löschen»: zuerst eine Sicherheitsfrage (Alert mit zwei Buttons)
@@ -119,7 +115,9 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="credit-card"
             label="Monatsbudget"
-            value={formatCHF(budgetRappen)}
+            // Ohne Budget steht hier «Festlegen»
+            value={budgetRappen == null ? 'Festlegen' : formatCHF(budgetRappen)}
+            hint={`${formatMonthYear(parseISODate(`${currentMonth}-01`))} · weitere Monate im Dialog`}
             onPress={() => setBudgetModalVisible(true)}
             isLast
           />
@@ -128,12 +126,12 @@ export default function SettingsScreen() {
         <SettingsSection
           title="Sicherheit"
           // Hinweis unter der Gruppe, falls Face ID hier nicht geht
-          footer={biometry.available ? undefined : getUnavailableText(biometry.reason)}
+          footer={biometry.available ? undefined : getUnavailableText(biometry.reason, biometricName)}
         >
           <SettingsRow
             icon="smile"
-            label={UNLOCK_LABEL}
-            hint={biometry.available ? undefined : `${BIOMETRIC_NAME} steht hier nicht zur Verfügung`}
+            label={unlockLabel}
+            hint={biometry.available ? undefined : `${biometricName} steht hier nicht zur Verfügung`}
             // Ohne Face ID steht der Schalter auf "aus", auch wenn er gespeichert "an" ist
             switchValue={biometry.available && settings.biometricEnabled}
             // Schalter umgelegt -> neuen Wert sofort speichern
@@ -196,18 +194,13 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* Die Dialoge liegen ausserhalb der ScrollView. «visible» steuert, ob sie offen sind. */}
-      <PromptModal
-        visible={budgetModalVisible}
-        title="Monatsbudget"
-        description="Wie viel möchtest du pro Monat ausgeben?"
-        // Aktuelles Budget als Startwert: 80000 Rappen -> '800.00'
-        initialValue={(budgetRappen / 100).toFixed(2)}
-        prefix="CHF"
-        keyboardType="decimal-pad"
-        validate={validateBudget}
+      {budgetModalVisible && <BudgetModal
+        currentMonth={currentMonth}
+        history={budgetHistory}
+        defaultBudgetRappen={settings.defaultBudgetRappen}
         onCancel={() => setBudgetModalVisible(false)}
-        onSave={handleSaveBudget}
-      />
+        onSave={updateMonthBudget}
+      />}
 
       <ChoiceModal
         visible={lockModalVisible}

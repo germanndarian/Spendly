@@ -5,7 +5,7 @@
 //
 // Hier liegt auch die automatische Sperre: Wer die App länger als die
 // eingestellte Sperrzeit im Hintergrund hat, landet wieder auf "Lock".
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -57,6 +57,8 @@ function useAutoLock(minutes) {
 
 // Die oberste Navigation. Sie entscheidet, welcher Screen sichtbar ist.
 export default function RootNavigator() {
+  // Ist gerade der Lock-Screen offen? Dann blenden wir die Snackbar aus.
+  const [locked, setLocked] = useState(true);
   const { colors, isDark } = useTheme();
   // Aus dem DataContext: Ladezustand, Einstellungen und die aktuelle Snackbar
   const { status, retry, settings, snackbar, hideSnackbar } = useData();
@@ -106,7 +108,7 @@ export default function RootNavigator() {
   // NavigationContainer verwaltet, welche Screens offen sind. Über ref kann
   // auch Code ausserhalb eines Screens navigieren (z. B. die Auto-Sperre).
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} onStateChange={() => setLocked(navigationRef.getCurrentRoute()?.name === 'Lock')}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {/* Start immer auf "Lock". headerShown: false = jeder Screen zeichnet
          seine Kopfzeile selbst, statt die Standard-Leiste zu verwenden. */}
@@ -127,7 +129,10 @@ export default function RootNavigator() {
       <Snackbar
         // Neuer key = React baut die Snackbar neu, die 5 Sekunden beginnen von vorn
         key={snackbar?.id}
-        visible={snackbar !== null}
+        // Auf dem Lock-Screen zeigen wir keine Meldung (sonst wäre sie ohne Entsperren sichtbar)
+        visible={snackbar !== null && !locked}
+        // Ablaufzeitpunkt der Meldung (bei «Rückgängig» ist das die Löschfrist)
+        expiresAt={snackbar?.expiresAt}
         message={snackbar?.message}
         icon={snackbar?.icon}
         actionLabel={snackbar?.actionLabel}

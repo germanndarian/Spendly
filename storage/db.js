@@ -2,6 +2,7 @@
 // Hier wird die Datenbank geöffnet und das Schema angelegt.
 // Die eigentlichen SQL-Befehle stehen in expenses.js und settings.js.
 import * as SQLite from 'expo-sqlite';
+import { toISODate } from '../utils/format';
 
 const DATABASE_NAME = 'spendly.db';
 
@@ -39,31 +40,63 @@ async function migrate(db) {
   const row = await db.getFirstAsync('PRAGMA user_version');
   let version = row?.user_version ?? 0;
 
-  if (version === 0) {
-    // Version 0 -> 1: die beiden Tabellen anlegen.
-    // - expenses: eine Zeile pro Ausgabe
-    // - settings: Einstellungen als Schlüssel/Wert
-    // Der Index auf «date» macht die Suche nach einem Monat schneller.
-    // Beträge stehen als ganze Rappen in einer INTEGER-Spalte.
-    // Kommazahlen wären beim Rechnen ungenau (0.1 + 0.2 !== 0.3).
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS expenses (
-        id TEXT PRIMARY KEY NOT NULL,
-        amount_rappen INTEGER NOT NULL,
-        category TEXT NOT NULL,
-        description TEXT NOT NULL DEFAULT '',
-        date TEXT NOT NULL,
-        created_at INTEGER NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses (date);
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY NOT NULL,
-        value TEXT NOT NULL
-      );
-    `);
-    version = 1;
-  }
+  // Alle Schritte laufen in einer Transaktion: Entweder klappt die ganze Migration oder keiner (nie ein halbes Schema).
+  await db.withExclusiveTransactionAsync(async (transaction) => {
+    // Gab es die Datenbank schon vorher? Dann übernehmen wir das bisherige Budget.
+    const existingInstallation = version > 0;
+    if (version === 0) {
+      // Version 0 -> 1: die beiden Tabellen anlegen.
+      // - expenses: eine Zeile pro Ausgabe
+      // - settings: Einstellungen als Schlüssel/Wert
+      // Der Index auf «date» macht die Suche nach einem Monat schneller.
+      // Beträge stehen als ganze Rappen in einer INTEGER-Spalte.
+      // Kommazahlen wären beim Rechnen ungenau (0.1 + 0.2 !== 0.3).
+      await transaction.execAsync(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id TEXT PRIMARY KEY NOT NULL,
+          amount_rappen INTEGER NOT NULL,
+          category TEXT NOT NULL,
+          description TEXT NOT NULL DEFAULT '',
+          date TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses (date);
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+      `);
+      version = 1;
+    }
 
-  // Neue Version speichern, damit beim nächsten Start nichts doppelt passiert
-  await db.execAsync(`PRAGMA user_version = ${version}`);
+    // Version 1 -> 2: Tabelle für Monatsbudgets und eine Spalte für «gelöscht, aber noch rückgängig machbar»
+    if (version === 1) {
+      await transaction.execAsync(`
+        CREATE TABLE IF NOT EXISTS monthly_budgets (
+          month TEXT PRIMARY KEY NOT NULL,
+          amount_rappen INTEGER NOT NULL CHECK (amount_rappen > 0)
+        );
+        ALTER TABLE expenses ADD COLUMN pending_delete_until INTEGER;
+      `);
+      // Die bisherige globale Vorgabe bleibt für bestehende Daten erhalten.
+      // Historische Beträge vor dieser Migration wurden noch nicht einzeln erfasst.
+      if (existingInstallation) {
+        const oldBudget = await transaction.getFirstAsync("SELECT value FROM settings WHERE key = 'budgetRappen'");
+        const amount = Number(oldBudget?.value ?? 80000);
+        if (Number.isSafeInteger(amount) && amount > 0) {
+          await transaction.runAsync(
+            'INSERT OR IGNORE INTO monthly_budgets (month, amount_rappen) SELECT DISTINCT substr(date, 1, 7), ? FROM expenses',
+            amount
+          );
+          await transaction.runAsync('INSERT OR IGNORE INTO monthly_budgets VALUES (?, ?)', toISODate(new Date()).slice(0, 7), amount);
+          await transaction.runAsync("INSERT OR IGNORE INTO settings (key, value) VALUES ('defaultBudgetRappen', ?)", String(amount));
+        }
+      }
+      // Die Datenbank ist jetzt auf Version 2
+      version = 2;
+    }
+
+    // Neue Version speichern, damit beim nächsten Start nichts doppelt passiert
+    await transaction.execAsync(`PRAGMA user_version = ${version}`);
+  });
 }

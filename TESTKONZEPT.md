@@ -1,5 +1,25 @@
 # Testkonzept Spendly
 
+## LB3 – Prüfstand vom 1. Oktober 2026
+
+Die folgende automatisierte Prüfung gehört zum finalen LB3-Code. Weiter unten bleibt das frühere manuelle Protokoll vom 25. September als historischer Nachweis erhalten; es ist kein neuer Kompletttest dieser Version.
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `npm test -- --runInBand` | 91 Tests in 9 Testdateien bestanden |
+| `npm run lint` | Ohne Fehler bestanden |
+| `git diff --check` | Bestanden |
+| SQLite-Migration, Monatsbudgets, Rollback, Löschfrist | Mit echter SQLite-Datenbank über Node `node:sqlite` getestet |
+| PIN-Hash, Fehlversuche und Wartezeit | Mit kontrolliertem SecureStore-Mock getestet |
+| Biometrie-Verfügbarkeit und Gerätename | Mit Plattform- und Biometrie-Mocks getestet |
+| «Code vergessen?» bei aktivierter/deaktivierter Biometrie | Tatsächlichen Screen-Handler im Renderer aufgerufen; native Authentifizierung gemockt |
+
+Die Tests benötigen Node.js ab 22.13. Mock-Tests bestätigen keine echte Face-ID-Erkennung. Der aktuelle native Simulatorlauf und die Grenze des physischen Nachweises stehen im [LB3-Prüfprotokoll](docs/lb3/PRUEFPROTOKOLL.md).
+
+Neue Regressionen: Budgets verschiedener Monate bleiben unabhängig; die Migration erhält alte Ausgaben; Ausgaben und letzte Kategorie werden gemeinsam gespeichert; Undo und endgültiges Löschen bleiben nach einem Neustart konsistent; falsche PIN-Versuche behalten ihre Wartezeit; deaktivierte Biometrie erlaubt keine datenerhaltende PIN-Wiederherstellung.
+
+## Historisches manuelles Protokoll – 25. September 2026
+
 ## Testumgebung
 
 | | |

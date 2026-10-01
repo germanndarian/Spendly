@@ -12,8 +12,10 @@ import Icon from './Icon';
 // So lange bleibt die Meldung sichtbar (5000 ms = 5 Sekunden)
 const DURATION_MS = 5000;
 
-// visible = anzeigen?, message = Text, icon = Symbol, actionLabel/onAction = Knopf wie «Rückgängig», onHide = wird nach 5 s oder nach dem Tipp aufgerufen
-export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide }) {
+// visible = anzeigen?, message = Text, icon = Symbol, actionLabel/onAction = Knopf wie «Rückgängig»,
+// onHide = wird nach Ablauf oder nach dem Tipp aufgerufen,
+// expiresAt = Zeitpunkt (ms), bis zu dem die Meldung sichtbar bleibt (ohne Angabe: 5 Sekunden)
+export default function Snackbar({ visible, message, icon = 'check-circle', actionLabel, onAction, onHide, expiresAt }) {
   // Aktuelle Farben holen (hell oder dunkel, je nach Einstellung)
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -35,10 +37,10 @@ export default function Snackbar({ visible, message, icon = 'check-circle', acti
       useNativeDriver: true,
     }).start();
 
-    // Nach 5 Sekunden automatisch schliessen
-    const timer = setTimeout(onHide, DURATION_MS);
+    // Nach 5 Sekunden (bzw. zum Zeitpunkt expiresAt) automatisch schliessen
+    const timer = setTimeout(onHide, expiresAt ? Math.max(0, expiresAt - Date.now()) : DURATION_MS);
     return () => clearTimeout(timer);
-  }, [visible, message, slide, onHide]);
+  }, [visible, message, slide, onHide, expiresAt]);
 
   // Nichts anzeigen, wenn gerade keine Meldung da ist
   if (!visible) return null;
